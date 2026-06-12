@@ -1,0 +1,280 @@
+/* ─── منصة رونق — أنماط إضافية ─── */
+
+/* Activity Tabs */
+.activity-nav {
+  display: flex;
+  gap: 0.75rem;
+  padding: 1rem 0;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.activity-tab {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.6rem 1.2rem;
+  border: 2px solid var(--color-border);
+  border-radius: 999px;
+  background: var(--color-surface);
+  cursor: pointer;
+  font-family: inherit;
+  font-size: 0.95rem;
+  transition: all 0.2s;
+  color: var(--color-text);
+}
+
+.activity-tab:hover {
+  border-color: var(--color-primary);
+}
+
+.activity-tab--active {
+  background: var(--color-primary);
+  border-color: var(--color-primary);
+  color: #fff;
+}
+
+.activity-tab__count {
+  font-size: 0.75rem;
+  opacity: 0.7;
+  background: rgba(0,0,0,0.1);
+  padding: 0.1rem 0.5rem;
+  border-radius: 999px;
+}
+
+.activity-tab--active .activity-tab__count {
+  background: rgba(255,255,255,0.2);
+}
+
+/* Portfolio */
+.portfolio {
+  padding: 4rem 0;
+  background: var(--color-surface);
+}
+
+.portfolio__grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 1.5rem;
+}
+
+.portfolio-item {
+  background: var(--warm-white);
+  border: 1px solid var(--color-border);
+  border-radius: 12px;
+  padding: 1.5rem;
+  text-align: center;
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.portfolio-item:hover {
+  transform: translateY(-4px);
+  box-shadow: var(--shadow);
+}
+
+.portfolio-item__icon {
+  font-size: 2.5rem;
+  display: block;
+  margin-bottom: 0.75rem;
+}
+
+.portfolio-item strong {
+  display: block;
+  margin-bottom: 0.25rem;
+}
+
+.portfolio-item small {
+  color: var(--color-text-muted);
+}
+
+/* Admin — Activities hierarchy */
+.admin-activities {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.admin-activity {
+  border: 2px solid var(--color-border);
+  border-radius: 12px;
+  overflow: hidden;
+  transition: border-color 0.2s;
+}
+
+.admin-activity--on {
+  border-color: var(--color-primary);
+}
+
+.admin-activity__header {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 1rem 1.25rem;
+  cursor: pointer;
+  background: var(--color-surface);
+}
+
+.admin-activity__icon {
+  font-size: 1.75rem;
+}
+
+.admin-activity__info {
+  flex: 1;
+}
+
+.admin-activity__info strong {
+  display: block;
+}
+
+.admin-activity__info small {
+  color: var(--color-text-muted);
+}
+
+.admin-activity__services {
+  padding: 0.75rem 1.25rem 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  border-top: 1px solid var(--color-border);
+  background: var(--warm-white);
+}
+
+.admin-section--wide {
+  grid-column: 1 / -1;
+}
+
+@media (min-width: 900px) {
+  .admin-section--wide {
+    grid-column: 1;
+  }
+}
+
+/* Admin tabs */
+.admin-tabs {
+  display: flex;
+  gap: 0.5rem;
+  padding: 1rem 0;
+  flex-wrap: wrap;
+}
+
+.admin-tab {
+  padding: 0.6rem 1.2rem;
+  border: 2px solid var(--color-border);
+  border-radius: 999px;
+  background: var(--color-surface);
+  cursor: pointer;
+  font-family: inherit;
+  font-size: 0.9rem;
+}
+
+.admin-tab--active {
+  background: var(--color-primary);
+  border-color: var(--color-primary);
+  color: #fff;
+}
+
+.admin-tab-panel {
+  padding-top: 1rem;
+}
+
+.admin-save-fab {
+  margin-top: 2rem;
+  width: 100%;
+  max-width: 400px;
+}
+
+.admin-details {
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  padding: 0.75rem 1rem;
+  margin-bottom: 0.75rem;
+}
+
+.admin-details summary {
+  cursor: pointer;
+  font-weight: 600;
+  padding: 0.25rem 0;
+}
+
+.admin-rows {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin-bottom: 0.75rem;
+}
+
+.admin-row-pair {
+  display: grid;
+  grid-template-columns: 1fr 2fr auto;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+.admin-input--sm { font-size: 0.9rem; }
+.admin-input--xs { max-width: 3rem; }
+.admin-input--icon { max-width: 4rem; text-align: center; }
+.admin-textarea { min-height: 4rem; resize: vertical; width: 100%; }
+
+.admin-row-remove {
+  border: none;
+  background: transparent;
+  color: var(--color-text-muted);
+  font-size: 1.25rem;
+  cursor: pointer;
+  padding: 0.25rem 0.5rem;
+}
+
+.admin-faq-row,
+.admin-step-row {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  padding: 0.75rem;
+  background: var(--color-surface);
+  border-radius: var(--radius);
+  position: relative;
+}
+
+.admin-faq-row .admin-row-remove,
+.admin-step-row .admin-row-remove {
+  position: absolute;
+  left: 0.5rem;
+  top: 0.5rem;
+}
+
+.admin-service-wrap {
+  border-bottom: 1px solid var(--color-border);
+  padding-bottom: 0.5rem;
+  margin-bottom: 0.5rem;
+}
+
+.admin-service-details {
+  margin: 0.5rem 0 0 2.5rem;
+  font-size: 0.9rem;
+}
+
+.admin-service-details summary {
+  cursor: pointer;
+  color: var(--color-primary);
+  margin-bottom: 0.5rem;
+}
+
+.admin-service-edit {
+  padding: 0.75rem;
+  background: var(--warm-white);
+  border-radius: var(--radius);
+}
+
+.admin-content-form .admin-field {
+  margin-bottom: 0.75rem;
+}
+
+.admin-section--inline {
+  margin-top: 1.5rem;
+}
+
+.admin-social-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}

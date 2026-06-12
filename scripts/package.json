@@ -1,0 +1,10 @@
+{
+  "name": "ronaq-platform-push",
+  "private": true,
+  "type": "module",
+  "dependencies": {
+    "web-push": "^3.6.7",
+    "@supabase/supabase-js": "^2.39.0",
+    "playwright": "^1.40.0"
+  }
+}

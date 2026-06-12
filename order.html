@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <script src="js/theme-early.js"></script>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="robots" content="index, follow">
+  <meta name="theme-color" content="#1a1a2e">
+  <title>اطلب الآن</title>
+  <link rel="manifest" href="manifest.webmanifest">
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/themes.css">
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="css/platform.css">
+  <link rel="stylesheet" href="css/booking.css">
+  <link rel="stylesheet" href="css/order.css">
+  <!-- Moyasar Form Styles -->
+  <link rel="stylesheet" href="https://cdn.moyasar.com/mpf/1.13.0/moyasar.css">
+  <link rel="icon" type="image/svg+xml" href="assets/logo.svg">
+</head>
+<body>
+
+  <header class="header" id="header">
+    <div class="container header__inner">
+      <a href="index.html" class="logo" aria-label="العودة للصفحة الرئيسية">
+        <span data-brand-logo data-size="48"></span>
+        <div class="logo__text">
+          <span class="logo__name" data-brand="name">اسم منشأتك</span>
+          <span class="logo__tagline" data-brand="tagline">وصف مختصر</span>
+        </div>
+      </a>
+      <nav class="nav" id="nav">
+        <a href="index.html#services">منتجاتنا</a>
+        <a href="book.html">حجز موعد</a>
+        <a href="order.html" class="nav__active">اطلب الآن</a>
+        <a href="index.html#contact">تواصل</a>
+        <a href="admin.html">الإدارة</a>
+      </nav>
+      <a href="#" class="btn btn--primary header__cta" data-contact="whatsapp" target="_blank" rel="noopener">واتساب</a>
+      <button class="menu-toggle" id="menuToggle" aria-label="فتح القائمة" aria-expanded="false">
+        <span></span><span></span><span></span>
+      </button>
+    </div>
+  </header>
+
+  <main class="booking-page order-page">
+    <div class="container">
+      <div class="booking-hero">
+        <h1 id="orderHeroTitle">اطلب الآن</h1>
+        <p id="orderHeroDesc">اختر المنتجات وأضفها للسلة — سنؤكد طلبك عبر واتساب.</p>
+      </div>
+
+      <div id="orderCartBar" class="order-cart-bar" hidden></div>
+
+      <nav class="activity-nav booking-activity-nav container" id="orderActivityNav" aria-label="المتاجر" hidden></nav>
+
+      <div id="orderDisabled" class="booking-card booking-disabled" hidden>
+        <h2>الطلب غير متاح حالياً</h2>
+        <p>فعّل منتجات التجارة من لوحة الإدارة أو تواصل معنا مباشرة.</p>
+        <a href="index.html#contact" class="btn btn--primary">تواصل معنا</a>
+      </div>
+
+      <div id="orderApp" hidden>
+        <div class="booking-steps" id="orderSteps"></div>
+
+        <div class="booking-card">
+          <div class="order-panel booking-panel" id="panelProduct">
+            <h2>١ — المنتجات</h2>
+            <div class="booking-services" id="orderProducts"></div>
+            <div class="booking-actions">
+              <button type="button" class="btn btn--primary" id="btnToCart">التالي: السلة</button>
+            </div>
+          </div>
+
+          <div class="order-panel booking-panel" id="panelCart" hidden>
+            <h2>٢ — سلة الطلب</h2>
+            <div id="orderCartList" class="order-cart-list"></div>
+            <div class="booking-actions">
+              <button type="button" class="btn btn--outline" id="btnBackProduct">رجوع</button>
+              <button type="button" class="btn btn--primary" id="btnToForm" disabled>التالي: بياناتك</button>
+            </div>
+          </div>
+
+          <div class="order-panel booking-panel" id="panelForm" hidden>
+            <h2>٣ — بيانات التواصل</h2>
+            <div class="booking-summary" id="orderSummary"></div>
+            <form class="booking-form" id="orderForm">
+              <div id="orderAddressBlock" class="booking-field" hidden>
+                <label for="orderAddress">عنوان التوصيل *</label>
+                <input type="text" id="orderAddress" placeholder="الحي، الشارع، تفاصيل التوصيل">
+              </div>
+              <div class="booking-field">
+                <label for="orderName">الاسم الكامل *</label>
+                <input type="text" id="orderName" required autocomplete="name">
+              </div>
+              <div class="booking-field">
+                <label for="orderPhone">رقم الجوال *</label>
+                <input type="tel" id="orderPhone" required dir="ltr" inputmode="tel" autocomplete="tel">
+              </div>
+              <div class="booking-field">
+                <label for="orderDistrict">الحي (اختياري)</label>
+                <input type="text" id="orderDistrict">
+              </div>
+              <div class="booking-field">
+                <label for="orderNotes">ملاحظات (اختياري)</label>
+                <textarea id="orderNotes" rows="3" placeholder="لون، مقاس، وقت التوصيل…"></textarea>
+              </div>
+              <div class="booking-actions">
+                <button type="button" class="btn btn--outline" id="btnBackCart">رجوع</button>
+                <button type="submit" class="btn btn--primary">إرسال الطلب عبر واتساب</button>
+              </div>
+            </form>
+          </div>
+
+          <div class="order-panel booking-panel" id="panelPayment" hidden>
+            <h2>٤ — الدفع الإلكتروني</h2>
+            <p id="paymentAmountLabel" class="booking-payment-amount" style="text-align: center; font-size: 1.15rem; font-weight: bold; margin-bottom: 20px; color: var(--color-primary);"></p>
+            <div class="mysr-form"></div>
+            <div class="booking-actions">
+              <button type="button" class="btn btn--outline" id="btnBackForm">رجوع وتعديل البيانات</button>
+            </div>
+          </div>
+
+          <div class="order-panel booking-panel" id="panelOrderSuccess" hidden>
+            <div class="booking-success">
+              <div class="booking-success__icon">✅</div>
+              <h2>تم إرسال الطلب</h2>
+              <p>سيُفتح واتساب لتأكيد الطلب والسعر النهائي.</p>
+              <a href="index.html" class="btn btn--outline">العودة للرئيسية</a>
+              <button type="button" class="btn btn--primary" id="btnNewOrder">طلب جديد</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <script src="js/activities-catalog.js"></script>
+  <script src="js/services-catalog.js"></script>
+  <script src="js/content-templates/commerce.js"></script>
+  <script src="js/ui-profiles/registry.js"></script>
+  <script src="js/social-catalog.js"></script>
+  <script src="js/themes-catalog.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="js/supabase-db.js"></script>
+  <script src="js/services-store.js"></script>
+  <script src="js/order-store.js"></script>
+  <script src="js/main.js"></script>
+  <script src="js/brand-logo.js"></script>
+  <script src="js/pwa.js"></script>
+  <!-- Moyasar Form SDK & Polyfills -->
+  <script src="https://cdn.moyasar.com/mpf/1.13.0/moyasar.js"></script>
+  <script src="js/order.js"></script>
+</body>
+</html>

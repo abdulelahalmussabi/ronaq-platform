@@ -1,0 +1,20 @@
+{
+  "name": "منصة مكِّن",
+  "short_name": "مكِّن",
+  "description": "منصة متعددة الأنشطة — حجز مواعيد وطلبات واتساب",
+  "lang": "ar",
+  "dir": "rtl",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#faf8f5",
+  "theme_color": "#1a1a2e",
+  "icons": [
+    {
+      "src": "assets/logo.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    }
+  ]
+}

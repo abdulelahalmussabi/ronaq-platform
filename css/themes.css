@@ -1,0 +1,176 @@
+/* ============================================
+   ثيمات رونق الخيال — يُطبَّق عبر data-theme على <html>
+   ============================================ */
+
+/* 1. تراكوتا وطين — دافئ، محلي، مناسب للصيانة المنزلية (افتراضي) */
+[data-theme="terracotta"],
+:root {
+  --t-50:  #FDF5F0;
+  --t-100: #FAE8DD;
+  --t-200: #F2CCB5;
+  --t-300: #E8A882;
+  --t-400: #E07A5F;
+  --t-500: #C4704E;
+  --t-600: #A0522D;
+  --t-700: #8B4513;
+  --t-800: #6B3A1F;
+  --t-900: #3D2914;
+  --s-50:  #FAF6F1;
+  --s-100: #F5E6D3;
+  --s-200: #E8D5BC;
+  --s-300: #D4A574;
+  --s-600: #8B7355;
+  --cream: #FAF0E6;
+  --sand:  #EDE0D4;
+  --bg:    #FFFBF7;
+  --shadow-rgb: 61, 41, 20;
+}
+
+/* 2. محيط أزرق — ثقة، احترافية، مناسب للسباكة والكهرباء */
+[data-theme="ocean"] {
+  --t-50:  #EFF6FF;
+  --t-100: #DBEAFE;
+  --t-200: #BFDBFE;
+  --t-300: #7CB8F0;
+  --t-400: #3B8FD9;
+  --t-500: #1D6FB5;
+  --t-600: #155A94;
+  --t-700: #124A7A;
+  --t-800: #0F3A5F;
+  --t-900: #0A2540;
+  --s-50:  #F0F9FF;
+  --s-100: #E0F2FE;
+  --s-200: #BAE6FD;
+  --s-300: #7DD3FC;
+  --s-600: #5B8BA8;
+  --cream: #F5FAFF;
+  --sand:  #E2EEF8;
+  --bg:    #F8FCFF;
+  --shadow-rgb: 10, 37, 64;
+}
+
+/* 3. غابة زيتونية — نظافة، طبيعة، صحة */
+[data-theme="forest"] {
+  --t-50:  #F3FAF4;
+  --t-100: #E2F3E4;
+  --t-200: #C5E6CA;
+  --t-300: #8EC99A;
+  --t-400: #5AAD6C;
+  --t-500: #3D8B52;
+  --t-600: #2F7042;
+  --t-700: #275A36;
+  --t-800: #1F4529;
+  --t-900: #142E1C;
+  --s-50:  #F5F9F3;
+  --s-100: #E8F0E4;
+  --s-200: #D4E4CC;
+  --s-300: #A8C49A;
+  --s-600: #6B8A62;
+  --cream: #F7FBF5;
+  --sand:  #E5EDE0;
+  --bg:    #FAFDF9;
+  --shadow-rgb: 20, 46, 28;
+}
+
+/* 4. منتصف الليل والذهب — فخامة، بريميوم */
+[data-theme="midnight"] {
+  --t-50:  #F5F3FF;
+  --t-100: #EDE9FE;
+  --t-200: #DDD6FE;
+  --t-300: #C4A96B;
+  --t-400: #D4AF37;
+  --t-500: #B8962E;
+  --t-600: #1E2A4A;
+  --t-700: #162038;
+  --t-800: #0F1729;
+  --t-900: #0A0F1C;
+  --s-50:  #F8F7FC;
+  --s-100: #EEEAF5;
+  --s-200: #D8D2E8;
+  --s-300: #B8AED0;
+  --s-600: #6B6580;
+  --cream: #F3F1F8;
+  --sand:  #E4E0EE;
+  --bg:    #FAFAFE;
+  --shadow-rgb: 10, 15, 28;
+}
+
+/* 5. صحراء ذهبية — تراثي سعودي، دافئ */
+[data-theme="desert"] {
+  --t-50:  #FFFBEB;
+  --t-100: #FEF3C7;
+  --t-200: #FDE68A;
+  --t-300: #E8C170;
+  --t-400: #D4A04A;
+  --t-500: #B8862D;
+  --t-600: #966F24;
+  --t-700: #7A5A1E;
+  --t-800: #5C4418;
+  --t-900: #3D2E10;
+  --s-50:  #FDF8F0;
+  --s-100: #F5EBD8;
+  --s-200: #E8D5B5;
+  --s-300: #D4B88A;
+  --s-600: #9A7B55;
+  --cream: #FBF5E8;
+  --sand:  #F0E4CE;
+  --bg:    #FFFCF5;
+  --shadow-rgb: 61, 46, 16;
+}
+
+/* 6. أردواز عصري — تقني، حديث، كاميرات وأنظمة ذكية */
+[data-theme="slate"] {
+  --t-50:  #F8FAFC;
+  --t-100: #F1F5F9;
+  --t-200: #E2E8F0;
+  --t-300: #94A8C4;
+  --t-400: #64748B;
+  --t-500: #475569;
+  --t-600: #334155;
+  --t-700: #1E293B;
+  --t-800: #0F172A;
+  --t-900: #020617;
+  --s-50:  #F8FAFC;
+  --s-100: #F1F5F9;
+  --s-200: #E2E8F0;
+  --s-300: #CBD5E1;
+  --s-600: #64748B;
+  --cream: #F8FAFC;
+  --sand:  #E2E8F0;
+  --bg:    #FFFFFF;
+  --shadow-rgb: 15, 23, 42;
+}
+
+/* ربط المتغيرات الدلالية + توافق style.css */
+[data-theme],
+:root {
+  --terracotta-50:  var(--t-50);
+  --terracotta-100: var(--t-100);
+  --terracotta-200: var(--t-200);
+  --terracotta-300: var(--t-300);
+  --terracotta-400: var(--t-400);
+  --terracotta-500: var(--t-500);
+  --terracotta-600: var(--t-600);
+  --terracotta-700: var(--t-700);
+  --terracotta-800: var(--t-800);
+  --terracotta-900: var(--t-900);
+  --clay-50:  var(--s-50);
+  --clay-100: var(--s-100);
+  --clay-200: var(--s-200);
+  --clay-300: var(--s-300);
+  --clay-600: var(--s-600);
+  --warm-white: var(--bg);
+  --color-bg:          var(--bg);
+  --color-surface:     var(--s-50);
+  --color-primary:     var(--t-500);
+  --color-primary-dark:var(--t-600);
+  --color-accent:      var(--t-400);
+  --color-text:        var(--t-900);
+  --color-text-muted:  var(--s-600);
+  --color-border:      var(--s-200);
+  --shadow: 0 4px 24px rgba(var(--shadow-rgb), 0.08);
+  --shadow-lg: 0 12px 48px rgba(var(--shadow-rgb), 0.12);
+  --logo-color: var(--t-600);
+  --logo-color-accent: var(--t-500);
+  --logo-color-light: #fff;
+}

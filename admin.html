@@ -1,0 +1,837 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <script src="js/theme-early.js"></script>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="robots" content="noindex, nofollow">
+  <meta name="theme-color" content="#1a1a2e">
+  <link rel="manifest" href="manifest.webmanifest">
+  <title>لوحة الإدارة</title>
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/themes.css">
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="css/admin.css">
+  <link rel="stylesheet" href="css/platform.css">
+  <link rel="stylesheet" href="css/pwa.css">
+</head>
+<body class="admin-body">
+
+  <div id="loginView" class="admin-login">
+    <div class="admin-login__card">
+      <h1 id="loginCardTitle">لوحة الإدارة</h1>
+      <p id="loginCardDesc">تحكم كامل بكل محتوى الواجهة والخدمات</p>
+      
+      <!-- Toggle Login vs Register -->
+      <div class="login-mode-tabs" style="display: flex; gap: 8px; margin-bottom: 20px; border-bottom: 1px solid var(--color-border); padding-bottom: 10px;">
+        <button type="button" id="tabToLogin" class="btn btn--primary btn--sm" style="flex:1">تسجيل الدخول</button>
+        <button type="button" id="tabToRegister" class="btn btn--outline btn--sm" style="flex:1">إنشاء حساب جديد</button>
+      </div>
+
+      <!-- Login Form -->
+      <form id="loginForm">
+        <!-- Auth Type Selection -->
+        <div class="admin-field" style="margin-bottom: 15px;">
+          <label for="loginAuthType">نوع الاتصال</label>
+          <select id="loginAuthType" class="admin-input">
+            <option value="saas" selected>حساب سحابي (البريد الإلكتروني)</option>
+            <option value="local">تطوير محلي (رمز الدخول PIN)</option>
+          </select>
+        </div>
+
+        <!-- Dynamic Fields -->
+        <div id="loginEmailBlock" class="admin-field">
+          <label for="loginEmailInput">البريد الإلكتروني</label>
+          <input type="email" id="loginEmailInput" class="admin-input" placeholder="example@ronaq.com" dir="ltr" required>
+        </div>
+
+        <div id="loginPasswordBlock" class="admin-field">
+          <label for="loginPasswordInput">كلمة المرور</label>
+          <input type="password" id="loginPasswordInput" class="admin-input" placeholder="أدخل كلمة المرور" required>
+        </div>
+
+        <div id="loginPinBlock" class="admin-field" hidden>
+          <label for="pinInput">رمز الدخول PIN</label>
+          <input type="password" id="pinInput" class="admin-input" placeholder="أدخل رمز الدخول">
+        </div>
+
+        <p id="loginError" class="admin-error" hidden>معلومات الدخول غير صحيحة</p>
+        <button type="submit" id="loginSubmitBtn" class="btn btn--primary btn--lg" style="width:100%">دخول</button>
+      </form>
+
+      <!-- Register Form -->
+      <form id="registerForm" hidden>
+        <div class="admin-field">
+          <label for="regTenantSlug">رابط موقعك المخصص (Tenant Slug)</label>
+          <input type="text" id="regTenantSlug" class="admin-input" placeholder="مثال: anas-salon" dir="ltr" required pattern="^[a-z0-9\-]+$">
+          <small class="admin-field__hint">يجب أن يحتوي على أحرف صغيرة وأرقام وفواصل فقط.</small>
+        </div>
+
+        <div class="admin-field">
+          <label for="regBusinessName">اسم المنشأة / النشاط</label>
+          <input type="text" id="regBusinessName" class="admin-input" placeholder="مثال: صالون الحلاقة الأنيق" required>
+        </div>
+
+        <div class="admin-field">
+          <label for="regEmail">البريد الإلكتروني</label>
+          <input type="email" id="regEmail" class="admin-input" placeholder="example@domain.com" dir="ltr" required>
+        </div>
+
+        <div class="admin-field">
+          <label for="regPassword">كلمة المرور</label>
+          <input type="password" id="regPassword" class="admin-input" placeholder="أدخل 6 خانات على الأقل" required minlength="6">
+        </div>
+
+        <div class="admin-field">
+          <label for="regPhone">رقم الجوال الرئيسي (لارتباط الواتساب)</label>
+          <input type="tel" id="regPhone" class="admin-input" placeholder="9665XXXXXXXX" dir="ltr" required>
+        </div>
+
+        <p id="registerError" class="admin-error" hidden style="color: #ff4d4f; font-size: 13px; margin-bottom: 15px;"></p>
+        <button type="submit" id="registerSubmitBtn" class="btn btn--primary btn--lg" style="width:100%">إنشاء الحساب وتفعيل الموقع</button>
+      </form>
+
+      <a href="index.html" class="admin-back" style="display: block; margin-top: 15px; text-align: center;">← العودة للموقع</a>
+    </div>
+  </div>
+
+  <div id="adminView" class="admin-panel" hidden>
+    <header class="admin-header">
+      <div class="admin-header__brand"><strong>إدارة المنصة</strong></div>
+      <div class="admin-header__actions">
+        <a href="index.html" class="btn btn--outline" target="_blank">معاينة</a>
+        <button type="button" id="exportBtn" class="btn btn--outline">تصدير config</button>
+        <button type="button" id="logoutBtn" class="btn btn--outline">خروج</button>
+      </div>
+    </header>
+
+    <nav class="admin-tabs container">
+      <button type="button" class="admin-tab admin-tab--active" data-tab="activities">الأنشطة والخدمات</button>
+      <button type="button" class="admin-tab" data-tab="content">محتوى الواجهة</button>
+      <button type="button" class="admin-tab" data-tab="brand">العلامة والتواصل</button>
+      <button type="button" class="admin-tab" data-tab="appointments">المواعيد</button>
+      <button type="button" class="admin-tab" data-tab="orders">الطلبات</button>
+      <button type="button" class="admin-tab" data-tab="staff">الموظفين</button>
+      <button type="button" class="admin-tab" data-tab="supabase">الربط والأتمتة</button>
+      <button type="button" class="admin-tab" data-tab="saas">الاشتراك والخرائط</button>
+      <button type="button" class="admin-tab" data-tab="developer">المطورين (API)</button>
+    </nav>
+
+    <main class="admin-main container">
+      <p id="enabledCount" class="admin-count"></p>
+
+      <div class="admin-tab-panel" data-panel="activities">
+        <section class="admin-section">
+          <h3>تفعيل الأنشطة وتعديل الخدمات</h3>
+          <p class="admin-hint">فعّل نشاطاً ثم خدماته. افتح «تعديل المحتوى» لكل خدمة لتغيير الاسم والوصف.</p>
+          <div id="activitiesList" class="admin-activities"></div>
+        </section>
+        <section class="admin-section admin-section--inline">
+          <div class="admin-field">
+            <label for="featuredActivitySelect">النشاط البارز</label>
+            <select id="featuredActivitySelect" class="admin-input"></select>
+          </div>
+          <div class="admin-field">
+            <label for="featuredSelect">الخدمة البارزة</label>
+            <select id="featuredSelect" class="admin-input"></select>
+          </div>
+          <div class="admin-field">
+            <label>الثيم</label>
+            <div id="themesGrid" class="themes-grid"></div>
+          </div>
+        </section>
+      </div>
+
+      <div class="admin-tab-panel" data-panel="content" hidden>
+        <section class="admin-section">
+          <h3>محتوى الواجهة حسب النشاط</h3>
+          <p class="admin-hint">عدّل Hero، الإحصائيات، من نحن، FAQ، SEO، وصورة كل نشاط.</p>
+          <div id="contentEditor"></div>
+        </section>
+      </div>
+
+      <div class="admin-tab-panel" data-panel="brand" hidden>
+        <div class="admin-grid">
+          <section class="admin-section">
+            <h3>العلامة التجارية</h3>
+            <div class="admin-field">
+              <label for="brandNameInput">اسم المنشأة</label>
+              <input type="text" id="brandNameInput" class="admin-input" placeholder="اسم منشأتك">
+            </div>
+            <div class="admin-field">
+              <label for="brandTaglineInput">الشعار الفرعي</label>
+              <input type="text" id="brandTaglineInput" class="admin-input" placeholder="وصف مختصر">
+            </div>
+            <div class="admin-field">
+              <label>الشعار (Logo)</label>
+              <div class="admin-logo-preview">
+                <span data-brand-logo data-size="72" id="brandLogoPreviewMount"></span>
+              </div>
+              <div class="admin-logo-actions">
+                <button type="button" id="brandLogoBtn" class="btn btn--outline">رفع شعار</button>
+                <button type="button" id="brandLogoResetBtn" class="btn btn--outline">إزالة</button>
+                <input type="file" id="brandLogoFile" accept="image/png,image/jpeg,image/webp,image/svg+xml" hidden>
+              </div>
+            </div>
+          </section>
+          <section class="admin-section">
+            <h3>التواصل</h3>
+            <div class="admin-field">
+              <label for="phoneInput">رقم الجوال الرئيسي</label>
+              <input type="tel" id="phoneInput" class="admin-input" dir="ltr" placeholder="9665XXXXXXXX">
+            </div>
+            <div id="socialList" class="admin-social-list"></div>
+          </section>
+        </div>
+      </div>
+
+      <div class="admin-tab-panel" data-panel="appointments" hidden>
+        <section class="admin-section admin-booking-section">
+          <div class="admin-booking-header">
+            <div>
+              <h3>تقويم المواعيد</h3>
+              <p class="admin-hint">إدارة حجوزات الأنشطة القائمة على المواعيد — أكّد الطلبات الواردة عبر واتساب.</p>
+            </div>
+            <div class="admin-booking-header__actions">
+              <select id="calendarActivityFilter" class="admin-input" title="تصفية حسب النشاط"></select>
+              <select id="calendarServiceFilter" class="admin-input" title="تصفية حسب الخدمة"></select>
+              <button type="button" id="addAppointmentBtn" class="btn btn--primary">+ موعد جديد</button>
+              <button type="button" id="saveAppointmentsBtn" class="btn btn--outline">حفظ المواعيد</button>
+            </div>
+          </div>
+
+          <div id="pendingRequests" class="admin-pending" hidden></div>
+
+          <div id="dueReminders" class="admin-reminders" hidden></div>
+
+          <div class="admin-calendar-nav">
+            <button type="button" id="adminCalPrev" aria-label="الشهر السابق">‹</button>
+            <h4 id="adminCalTitle"></h4>
+            <button type="button" id="adminCalNext" aria-label="الشهر التالي">›</button>
+          </div>
+          <div id="adminCalendar" class="admin-calendar"></div>
+
+          <div class="admin-appointments-list">
+            <h4 id="adminDayTitle">مواعيد اليوم</h4>
+            <div id="adminAppointmentsList"></div>
+          </div>
+        </section>
+
+        <section class="admin-section">
+          <h3>تذكير واتساب التلقائي</h3>
+          <p class="admin-hint">يُفحص تلقائياً عند فتح لوحة الإدارة — يفتح واتساب برسالة جاهزة لكل عميل عند استحقاق التذكير.</p>
+          <div class="admin-reminder-settings">
+            <label class="admin-check">
+              <input type="checkbox" id="remindersEnabled" checked>
+              <span>تفعيل التذكير التلقائي</span>
+            </label>
+            <div class="admin-field">
+              <label for="reminderHoursInput">إرسال التذكير قبل الموعد (ساعات، مفصولة بفاصلة)</label>
+              <input type="text" id="reminderHoursInput" class="admin-input" dir="ltr" placeholder="24, 2" value="24, 2">
+            </div>
+            <div class="admin-field">
+              <label for="reminderWindowInput">نافذة الإرسال (دقائق)</label>
+              <input type="number" id="reminderWindowInput" class="admin-input" min="15" max="240" value="60" dir="ltr">
+            </div>
+            <button type="button" id="saveReminderSettingsBtn" class="btn btn--outline">حفظ إعدادات التذكير</button>
+            <button type="button" id="enableNotificationsBtn" class="btn btn--outline">تفعيل إشعارات المتصفح</button>
+          </div>
+        </section>
+
+        <section class="admin-section">
+          <h3>Web Push (إشعارات السيرفر)</h3>
+          <p class="admin-hint">للإرسال من سيرفر: أنشئ مفاتيح VAPID ثم اشترك وصدّر الملف. مثال الإرسال: <code>node scripts/send-push.mjs</code></p>
+          <div class="admin-reminder-settings">
+            <label class="admin-check">
+              <input type="checkbox" id="pushEnabled">
+              <span>تفعيل Web Push</span>
+            </label>
+            <div class="admin-field">
+              <label for="vapidPublicKeyInput">VAPID Public Key</label>
+              <input type="text" id="vapidPublicKeyInput" class="admin-input" dir="ltr" placeholder="BEl62iUYgUivxIkv69yViEuiBIa-Ib9-SkvMeAtA3LFgDzkr12Z...">
+            </div>
+            <p id="pushStatus" class="admin-hint"></p>
+            <div class="admin-backup">
+              <button type="button" id="savePushSettingsBtn" class="btn btn--outline" style="flex:1">حفظ Push</button>
+              <button type="button" id="subscribePushBtn" class="btn btn--outline" style="flex:1">اشتراك هذا الجهاز</button>
+              <button type="button" id="exportPushSubsBtn" class="btn btn--outline" style="flex:1">تصدير اشتراكات</button>
+            </div>
+          </div>
+        </section>
+
+        <section class="admin-section">
+          <h3>نسخ احتياطي للمواعيد</h3>
+          <p class="admin-hint">تنزيل أو استيراد <code>appointments.json</code> — أو صدّر التقويم بصيغة ICS لاستيراده في Google Calendar / Outlook / Apple.</p>
+          <div class="admin-backup">
+            <button type="button" id="exportAptBtn" class="btn btn--outline" style="flex:1">تنزيل appointments.json</button>
+            <button type="button" id="exportIcsBtn" class="btn btn--outline" style="flex:1">تصدير التقويم (.ics)</button>
+            <button type="button" id="importAptBtn" class="btn btn--outline" style="flex:1">استيراد مواعيد</button>
+            <input type="file" id="importAptFile" accept=".json" hidden>
+          </div>
+        </section>
+      </div>
+
+      <div class="admin-tab-panel" data-panel="orders" hidden>
+        <section class="admin-section">
+          <div class="admin-booking-header">
+            <div>
+              <h3>إدارة الطلبات</h3>
+              <p class="admin-hint">متابعة وتأكيد وتعديل طلبات شراء المنتجات الواردة للمتاجر.</p>
+            </div>
+            <div class="admin-booking-header__actions">
+              <select id="ordersActivityFilter" class="admin-input" title="تصفية حسب النشاط">
+                <option value="all">— كل الأنشطة —</option>
+              </select>
+              <button type="button" id="saveOrdersBtn" class="btn btn--outline">حفظ الطلبات</button>
+            </div>
+          </div>
+
+          <div class="admin-appointments-list">
+            <h4 id="adminOrdersDayTitle">قائمة الطلبات الواردة</h4>
+            <div id="adminOrdersList">جاري تحميل الطلبات...</div>
+          </div>
+        </section>
+
+        <section class="admin-section">
+          <h3>نسخ احتياطي للطلبات</h3>
+          <p class="admin-hint">تنزيل أو استيراد <code>orders.json</code> لحفظ الطلبات يدوياً.</p>
+          <div class="admin-backup">
+            <button type="button" id="exportOrdersBtn" class="btn btn--outline" style="flex:1">تنزيل orders.json</button>
+            <button type="button" id="importOrdersBtn" class="btn btn--outline" style="flex:1">استيراد طلبات</button>
+            <input type="file" id="importOrdersFile" accept=".json" hidden>
+          </div>
+        </section>
+      </div>
+
+      <div class="admin-tab-panel" data-panel="supabase" hidden>
+        <section class="admin-section">
+          <h3>إعدادات قاعدة بيانات Supabase السحابية</h3>
+          <p class="admin-hint">مزامنة حية ومباشرة للمواعيد والطلبات وتكوين الواجهة بين جميع الأجهزة بدون خوادم مكلفة.</p>
+          
+          <div class="admin-field" style="margin-top: 15px;">
+            <label class="admin-check">
+              <input type="checkbox" id="supabaseEnabled">
+              <span>تفعيل المزامنة السحابية</span>
+            </label>
+          </div>
+
+          <div class="admin-field">
+            <label for="supabaseUrlInput">Supabase API URL</label>
+            <input type="text" id="supabaseUrlInput" class="admin-input" dir="ltr" placeholder="https://xxxxxx.supabase.co">
+          </div>
+
+          <div class="admin-field">
+            <label for="supabaseKeyInput">Supabase Anon Key</label>
+            <input type="password" id="supabaseKeyInput" class="admin-input" dir="ltr" placeholder="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...">
+          </div>
+
+          <div class="admin-backup" style="margin-top: 20px;">
+            <button type="button" id="supabaseTestBtn" class="btn btn--outline" style="flex:1">اختبار الاتصال</button>
+            <button type="button" id="supabaseSaveSettingsBtn" class="btn btn--primary" style="flex:1">حفظ إعدادات الربط</button>
+          </div>
+        </section>
+
+        <section class="admin-section">
+          <h3>تهيئة قاعدة البيانات (SQL Script)</h3>
+          <p class="admin-hint">انسخ الكود أدناه والصقه في نافذة <strong>SQL Editor</strong> في لوحة تحكم Supabase لتجهيز الجداول وسياسات الأمان بضغطة زر واحدة:</p>
+          <div class="admin-field">
+            <textarea id="supabaseSqlArea" class="admin-input" rows="12" readonly dir="ltr" style="font-family: monospace; font-size: 13px; background: #1a1a2e; color: #a9b7c6;"></textarea>
+          </div>
+          <div class="admin-backup">
+            <button type="button" id="supabaseCopySqlBtn" class="btn btn--outline" style="width:100%">نسخ كود التهيئة</button>
+          </div>
+        </section>
+
+        <section class="admin-section">
+          <h3>أتمتة إرسال رسائل وتذكيرات واتساب تلقائياً</h3>
+          <p class="admin-hint">أرسل رسائل تأكيد المواعيد ورسائل التذكير تلقائياً للعملاء صامتاً في الخلفية.</p>
+
+          <div class="admin-field" style="margin-top: 15px;">
+            <label class="admin-check">
+              <input type="checkbox" id="whatsappApiEnabled">
+              <span>تفعيل أتمتة واتساب</span>
+            </label>
+          </div>
+
+          <div class="admin-field">
+            <label for="whatsappApiProvider">بوابة إرسال واتساب (API Gateway)</label>
+            <select id="whatsappApiProvider" class="admin-input">
+              <option value="none">— اختر البوابة —</option>
+              <option value="ultramsg">UltraMsg (غير رسمي - كود QR)</option>
+              <option value="twilio">Twilio (رسمي - موافقات فيسبوك)</option>
+              <option value="custom">Custom Webhook (رابط مخصص لبوت/خادم خارجي)</option>
+            </select>
+          </div>
+
+          <div id="whatsappUrlBlock" class="admin-field" hidden>
+            <label for="whatsappApiUrl">رابط الـ Webhook أو البوابة (API URL)</label>
+            <input type="text" id="whatsappApiUrl" class="admin-input" dir="ltr" placeholder="https://api.example.com/whatsapp/send">
+          </div>
+
+          <div id="whatsappInstanceBlock" class="admin-field" hidden>
+            <label for="whatsappApiInstanceId">معرف النسخة (Instance ID) أو معرف الحساب (Account SID)</label>
+            <input type="text" id="whatsappApiInstanceId" class="admin-input" dir="ltr" placeholder="instanceXXXX أو Twilio Account SID">
+          </div>
+
+          <div id="whatsappTokenBlock" class="admin-field" hidden>
+            <label for="whatsappApiToken">رمز المرور أو التوكن (Auth Token / API Key)</label>
+            <input type="password" id="whatsappApiToken" class="admin-input" dir="ltr" placeholder="أدخل التوكن أو كلمة السر للربط">
+          </div>
+
+          <div id="whatsappFromBlock" class="admin-field" hidden>
+            <label for="whatsappApiFromNumber">رقم المرسل لـ Twilio (Twilio Sender Number)</label>
+            <input type="text" id="whatsappApiFromNumber" class="admin-input" dir="ltr" placeholder="+14155253486">
+          </div>
+
+          <div class="admin-field">
+            <label class="admin-check">
+              <input type="checkbox" id="whatsappSendConfirmation" checked>
+              <span>أرسل رسالة تأكيد للعميل تلقائياً فور نقر المسؤول على "تأكيد الموعد"</span>
+            </label>
+          </div>
+
+          <div class="admin-field">
+            <label class="admin-check">
+              <input type="checkbox" id="whatsappSendReminder" checked>
+              <span>أرسل رسائل تذكير تلقائية مستحقة في الخلفية</span>
+            </label>
+          </div>
+
+          <div class="admin-backup" style="margin-top: 20px;">
+            <button type="button" id="whatsappTestBtn" class="btn btn--outline" style="flex:1">اختبار الإرسال التجريبي</button>
+            <button type="button" id="whatsappSaveSettingsBtn" class="btn btn--primary" style="flex:1">حفظ إعدادات الأتمتة</button>
+          </div>
+        </section>
+
+        <section class="admin-section">
+          <h3>بوابة الدفع الإلكتروني (مدى و Apple Pay)</h3>
+          <p class="admin-hint">تمكين الدفع الإلكتروني المباشر لتأكيد الحجوزات تلقائياً عبر بوابة Moyasar.</p>
+
+          <div class="admin-field" style="margin-top: 15px;">
+            <label class="admin-check">
+              <input type="checkbox" id="paymentEnabled">
+              <span>تفعيل الدفع الإلكتروني</span>
+            </label>
+          </div>
+
+          <div class="admin-field">
+            <label for="paymentProvider">بوابة الدفع</label>
+            <select id="paymentProvider" class="admin-input">
+              <option value="moyasar">Moyasar (ميسر — مدى، فيزا، ماستركارد، Apple Pay، Google Pay)</option>
+            </select>
+          </div>
+
+          <div class="admin-field">
+            <label for="paymentPublishableKey">المفتاح العام (Publishable Key)</label>
+            <input type="text" id="paymentPublishableKey" class="admin-input" dir="ltr" placeholder="pk_test_... أو pk_live_...">
+            <small class="admin-field__hint">ملاحظة: يجب توثيق نطاق موقعك (Domain Verification) في لوحة تحكم ميسر لتفعيل خيار الدفع بـ Apple Pay و Google Pay.</small>
+          </div>
+
+          <div class="admin-field">
+            <label class="admin-check">
+              <input type="checkbox" id="paymentRequire">
+              <span>إلزامية الدفع (عدم تأكيد الحجز إلا بعد نجاح الدفع)</span>
+            </label>
+          </div>
+
+          <div class="admin-field">
+            <label class="admin-check">
+              <input type="checkbox" id="paymentSandbox">
+              <span>تفعيل وضع التجربة والبطاقات الوهمية (Sandbox / Test Mode)</span>
+            </label>
+          </div>
+
+          <div class="admin-field">
+            <label for="paymentCurrency">العملة الافتراضية</label>
+            <select id="paymentCurrency" class="admin-input">
+              <option value="SAR">SAR — ريال سعودي</option>
+              <option value="AED">AED — درهم إماراتي</option>
+              <option value="BHD">BHD — دينار بحريني</option>
+              <option value="KWD">KWD — دينار كويتي</option>
+              <option value="OMR">OMR — ريال عماني</option>
+              <option value="QAR">QAR — ريال قطري</option>
+            </select>
+          </div>
+
+          <div class="admin-backup" style="margin-top: 20px;">
+            <button type="button" id="paymentSaveSettingsBtn" class="btn btn--primary" style="width:100%">حفظ إعدادات الدفع</button>
+          </div>
+        </section>
+
+        <section class="admin-section">
+          <h3>تحديث قاعدة البيانات لدعم حقول الدفع (SQL Upgrade)</h3>
+          <p class="admin-hint">إذا كنت قد قمت بربط Supabase مسبقاً، يرجى تشغيل هذا الأمر في <strong>SQL Editor</strong> لإضافة أعمدة الدفع لجدول المواعيد:</p>
+          <div class="admin-field">
+            <textarea id="supabaseUpgradeSqlArea" class="admin-input" rows="5" readonly dir="ltr" style="font-family: monospace; font-size: 13px; background: #1a1a2e; color: #a9b7c6;">
+ALTER TABLE ronaq_appointments ADD COLUMN IF NOT EXISTS payment_status TEXT DEFAULT 'unpaid';
+ALTER TABLE ronaq_appointments ADD COLUMN IF NOT EXISTS payment_id TEXT;
+ALTER TABLE ronaq_appointments ADD COLUMN IF NOT EXISTS payment_method TEXT;
+ALTER TABLE ronaq_appointments ADD COLUMN IF NOT EXISTS payment_amount NUMERIC;</textarea>
+          </div>
+          <div class="admin-backup">
+            <button type="button" id="supabaseCopyUpgradeSqlBtn" class="btn btn--outline" style="width:100%">نسخ أمر التحديث</button>
+          </div>
+        </section>
+      </div>
+
+      <div class="admin-tab-panel" data-panel="saas" hidden>
+        <div class="admin-grid">
+          <!-- Subscription management -->
+          <section class="admin-section">
+            <h3>إدارة الاشتراك ونظام SAAS</h3>
+            <p class="admin-hint">تابع تفاصيل اشتراكك في المنصة وقم بتجديده فوراً لتفعيل الخدمات.</p>
+            
+            <div class="admin-field" style="margin-top: 15px;">
+              <label>حالة الاشتراك الحالي</label>
+              <div id="saasSubStatus" class="admin-status-badge" style="padding: 8px 12px; border-radius: 4px; font-weight: bold; display: inline-block;">جاري التحميل...</div>
+            </div>
+            
+            <div class="admin-field">
+              <label>تاريخ انتهاء الاشتراك</label>
+              <input type="text" id="saasSubEnd" class="admin-input" readonly dir="ltr">
+            </div>
+
+            <div class="admin-field">
+              <label for="tenantSlugInput">رابط العميل المخصص (Tenant Slug)</label>
+              <input type="text" id="tenantSlugInput" class="admin-input" dir="ltr" readonly>
+              <small class="admin-field__hint">رابط موقعك: <code>index.html?tenant=<span id="tenantSlugHint">default</span></code></small>
+            </div>
+            
+            <div class="admin-field" style="margin-top:20px;">
+              <label>تجديد الاشتراك ونظام الفوترة</label>
+              <p class="admin-hint">اختر باقة التجديد المناسبة:</p>
+              <select id="renewMonthsSelect" class="admin-input" style="margin-bottom: 12px;">
+                <option value="1">شهر واحد — 99 ريال</option>
+                <option value="3">3 أشهر — 249 ريال (وفر 15%)</option>
+                <option value="6">6 أشهر — 449 ريال (وفر 25%)</option>
+                <option value="12" selected>سنة كاملة — 799 ريال (وفر 33%)</option>
+              </select>
+              <div style="display:flex; gap:10px; flex-wrap:wrap;">
+                <button type="button" id="renewSubMoyasarBtn" class="btn btn--primary" style="flex: 2; min-width: 150px;">💳 سداد إلكتروني (Moyasar)</button>
+                <button type="button" id="renewSubManualBtn" class="btn btn--outline" style="flex: 1; min-width: 150px; border-color: var(--color-primary); color: var(--color-primary);">🔄 تجديد يدوي (للتجربة)</button>
+              </div>
+            </div>
+
+            <!-- Moyasar payment placeholder for SaaS billing -->
+            <div id="saasPaymentBlock" style="margin-top:20px; border: 1px solid var(--color-border); padding: 15px; border-radius: var(--radius); background:#fcfbfa;" hidden>
+              <h4 style="margin-top:0; color:var(--color-primary);">💳 استمارة السداد الآمن</h4>
+              <p class="admin-hint" id="saasPaymentAmountLabel" style="font-weight:bold; font-size:1rem; margin-bottom:15px; color:var(--color-text);"></p>
+              <div id="saasMoyasarForm" class="mysr-form"></div>
+              <div style="text-align:left; margin-top:10px;">
+                <button type="button" id="cancelSaasPaymentBtn" class="btn btn--outline btn--sm" style="color:#c0392b; border-color:#c0392b20;">إلغاء السداد</button>
+              </div>
+            </div>
+
+            <!-- Invoices list -->
+            <div class="admin-field" style="margin-top:25px;">
+              <label>سجل الفواتير والمدفوعات</label>
+              <div style="overflow-x: auto; background:#fff; border: 1px solid var(--color-border); border-radius: var(--radius); margin-top:8px;">
+                <table class="admin-table" style="width:100%; border-collapse:collapse; font-size:0.82rem;">
+                  <thead>
+                    <tr style="background:#f9f8f6; border-bottom:1px solid var(--color-border); text-align:right;">
+                      <th style="padding:10px;">رقم العملية / الفاتورة</th>
+                      <th style="padding:10px;">المبلغ</th>
+                      <th style="padding:10px;">المدة</th>
+                      <th style="padding:10px;">الحالة</th>
+                      <th style="padding:10px;">التاريخ</th>
+                    </tr>
+                  </thead>
+                  <tbody id="saasInvoicesList">
+                    <tr><td colspan="5" class="admin-hint" style="text-align:center; padding:15px;">لا توجد فواتير سابقة.</td></tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </section>
+          
+          <!-- Google Maps & Service Area settings -->
+          <section class="admin-section">
+            <h3>خرائط جوجل ونطاق الخدمة</h3>
+            <p class="admin-hint">حدد موقع نشاطك والمدى الجغرافي الذي تغطيه خدماتك ليراها الزوار.</p>
+            
+            <div class="admin-field" style="margin-top: 15px;">
+              <label class="admin-check">
+                <input type="checkbox" id="mapsEnabled">
+                <span>تفعيل خدمة الموقع والخرائط</span>
+              </label>
+            </div>
+            
+            <div class="admin-field">
+              <label for="mapsListingUrl">رابط النشاط على خرائط جوجل (Google Maps Link)</label>
+              <input type="text" id="mapsListingUrl" class="admin-input" dir="ltr" placeholder="https://maps.google.com/...">
+            </div>
+
+            <div class="admin-field">
+              <label for="mapsCity">المدينة / المنطقة</label>
+              <input type="text" id="mapsCity" class="admin-input" placeholder="مثال: جدة، الرياض">
+            </div>
+            
+            <div class="admin-field">
+              <label for="mapsRadius">قطر تغطية الخدمة (بالكيلومتر)</label>
+              <input type="number" id="mapsRadius" class="admin-input" min="5" max="80" value="25" dir="ltr">
+            </div>
+            
+            <div class="admin-field" style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+              <div>
+                <label for="mapsLat">خط العرض (Latitude)</label>
+                <input type="number" step="any" id="mapsLat" class="admin-input" placeholder="21.485811" dir="ltr">
+              </div>
+              <div>
+                <label for="mapsLng">خط الطول (Longitude)</label>
+                <input type="number" step="any" id="mapsLng" class="admin-input" placeholder="39.192505" dir="ltr">
+              </div>
+            </div>
+            
+            <div class="admin-field">
+              <label for="mapsNote">ملاحظة التغطية والتوصيل</label>
+              <input type="text" id="mapsNote" class="admin-input" placeholder="مثال: نصل إلى جميع الأحياء خلال ساعتين">
+            </div>
+            
+            <div class="admin-field">
+              <label>معاينة خريطة النطاق الجغرافي</label>
+              <div id="adminMapsPreviewContainer"></div>
+            </div>
+          </section>
+        </div>
+      </div>
+
+      <div class="admin-tab-panel" data-panel="staff" hidden>
+        <div class="admin-grid">
+          <section class="admin-section" style="flex:2">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px; flex-wrap:wrap; gap:10px;">
+              <h3 style="margin:0;">إدارة الموظفين والفنيين</h3>
+              <button type="button" id="addStaffBtn" class="btn btn--primary btn--sm">+ إضافة فني/موظف</button>
+            </div>
+            <p class="admin-hint">أضف الفنيين والموظفين وحدد رموز الدخول الخاصة بهم ليتمكنوا من استخدام بوابة الفنيين وإكمال المهام.</p>
+            <div id="adminStaffList" style="margin-top:15px;">جاري تحميل الموظفين...</div>
+          </section>
+
+          <section class="admin-section" style="flex:1">
+            <h3>بوابة الفنيين</h3>
+            <p class="admin-hint">رابط الدخول المباشر للفنيين:</p>
+            <div style="background:#faf8f5; padding:12px; border-radius:4px; border:1px solid var(--color-border); word-break:break-all; font-family:monospace; font-size:0.85rem; margin-top:10px;">
+              <a id="staffPortalLink" href="staff.html" target="_blank" style="color:var(--color-primary); font-weight:bold; text-decoration:underline;">staff.html</a>
+            </div>
+            <p class="admin-hint" style="margin-top:10px;">يمكن للفني تسجيل الدخول باستخدام معرف المنشأة (Slug)، رقم جواله، ورمز PIN السري الخاص به.</p>
+          </section>
+        </div>
+      </div>
+
+      <div class="admin-tab-panel" data-panel="developer" hidden>
+        <div class="admin-grid">
+          <section class="admin-section" style="flex: 2;">
+            <h3>واجهة برمجة التطبيقات (Public API v1)</h3>
+            <p class="admin-hint">تتيح لك واجهة برمجة التطبيقات ربط نظامك بأي تطبيقات أو خدمات خارجية لمزامنة الحجوزات والطلبات تلقائياً.</p>
+            
+            <div style="margin-top:20px;">
+              <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
+                <label style="font-weight:bold; margin:0;">مفاتيح الاتصال النشطة (API Keys)</label>
+                <button type="button" id="generateApiKeyBtn" class="btn btn--primary btn--sm">توليد مفتاح جديد</button>
+              </div>
+              <div id="apiKeysList">جاري التحميل...</div>
+            </div>
+          </section>
+
+          <section class="admin-section" style="flex: 1;">
+            <h3>أمثلة سريعة للربط البرمجي</h3>
+            <p class="admin-hint">مثال جلب الحجوزات باستخدام cURL:</p>
+            <pre style="direction:ltr; text-align:left; background:#1a1a2e; color:#a6accd; padding:12px; border-radius:4px; font-size:0.75rem; overflow-x:auto; margin-top:8px;">curl -H "Authorization: Bearer YOUR_API_KEY" \
+  https://mken.vercel.app/api/v1/appointments</pre>
+            
+            <p class="admin-hint" style="margin-top:15px;">مثال جلب الطلبات بـ Node.js:</p>
+            <pre style="direction:ltr; text-align:left; background:#1a1a2e; color:#a6accd; padding:12px; border-radius:4px; font-size:0.75rem; overflow-x:auto; margin-top:8px;">fetch('/api/v1/orders', {
+  headers: { 'Authorization': 'Bearer YOUR_API_KEY' }
+})
+.then(res => res.json())
+.then(data => console.log(data));</pre>
+          </section>
+        </div>
+      </div>
+
+      <div id="appointmentModal" class="admin-modal" hidden>
+        <div class="admin-modal__card">
+          <h3 id="appointmentModalTitle">إضافة موعد</h3>
+          <form id="appointmentForm" class="admin-modal__form">
+            <div class="admin-field">
+              <label for="aptActivity">النشاط</label>
+              <select id="aptActivity" class="admin-input">
+                <option value="all">— كل الأنشطة —</option>
+              </select>
+            </div>
+            <div class="admin-field">
+              <label for="aptService">الخدمة</label>
+              <select id="aptService" class="admin-input" required></select>
+            </div>
+            <div class="admin-field">
+              <label for="aptDate">التاريخ</label>
+              <input type="date" id="aptDate" class="admin-input" required dir="ltr">
+            </div>
+            <div class="admin-field">
+              <label for="aptTime">الوقت</label>
+              <input type="time" id="aptTime" class="admin-input" required dir="ltr">
+            </div>
+            <div class="admin-field">
+              <label for="aptName">اسم العميل</label>
+              <input type="text" id="aptName" class="admin-input" required>
+            </div>
+            <div class="admin-field">
+              <label for="aptPhone">الجوال</label>
+              <input type="tel" id="aptPhone" class="admin-input" required dir="ltr">
+            </div>
+            <div class="admin-field">
+              <label for="aptDistrict">الحي / المنطقة</label>
+              <input type="text" id="aptDistrict" class="admin-input">
+            </div>
+            <div class="admin-field">
+              <label for="aptAddress">العنوان</label>
+              <input type="text" id="aptAddress" class="admin-input" placeholder="للخدمات المتنقلة أو التوصيل">
+            </div>
+            <div class="admin-field">
+              <label for="aptPartySize">عدد الضيوف / الأشخاص</label>
+              <input type="number" id="aptPartySize" class="admin-input" min="1" max="50" placeholder="اختياري">
+            </div>
+            <div class="admin-field">
+              <label for="aptNights">عدد الليالي</label>
+              <input type="number" id="aptNights" class="admin-input" min="1" max="90" placeholder="اختياري — للفنادق">
+            </div>
+            <div class="admin-field">
+              <label for="aptNotes">ملاحظات</label>
+              <textarea id="aptNotes" class="admin-input" rows="2"></textarea>
+            </div>
+            <div class="admin-field">
+              <label for="aptStaff">الموظف / الفني المسؤول</label>
+              <select id="aptStaff" class="admin-input">
+                <option value="">— غير مسند —</option>
+              </select>
+            </div>
+            <div class="admin-field">
+              <label for="aptStatus">الحالة</label>
+              <select id="aptStatus" class="admin-input">
+                <option value="confirmed">مؤكد</option>
+                <option value="pending">قيد الانتظار</option>
+                <option value="cancelled">ملغي</option>
+              </select>
+            </div>
+            <div class="admin-field">
+              <label for="aptPaymentStatus">حالة الدفع</label>
+              <select id="aptPaymentStatus" class="admin-input">
+                <option value="unpaid">غير مدفوع (Unpaid)</option>
+                <option value="paid">مدفوع (Paid)</option>
+                <option value="failed">فشل الدفع (Failed)</option>
+                <option value="refunded">مسترجع (Refunded)</option>
+              </select>
+            </div>
+            <div class="admin-field">
+              <label for="aptPaymentAmount">المبلغ المدفوع</label>
+              <input type="number" step="any" id="aptPaymentAmount" class="admin-input" placeholder="اختياري — مثال: 150">
+            </div>
+            <div class="admin-field">
+              <label for="aptPaymentMethod">طريقة الدفع</label>
+              <input type="text" id="aptPaymentMethod" class="admin-input" placeholder="مثال: mada, applepay, creditcard">
+            </div>
+            <div class="admin-field">
+              <label for="aptPaymentId">معرف العملية (Payment ID)</label>
+              <input type="text" id="aptPaymentId" class="admin-input" placeholder="مثال: pay_xxxxxx">
+            </div>
+            <div class="admin-modal__actions">
+              <button type="button" id="aptModalCancel" class="btn btn--outline">إلغاء</button>
+              <button type="submit" class="btn btn--primary">حفظ الموعد</button>
+            </div>
+          </form>
+        </div>
+      </div>
+
+      <!-- Staff Member Modal -->
+      <div id="staffModal" class="admin-modal" hidden>
+        <div class="admin-modal__card">
+          <h3 id="staffModalTitle">إضافة موظف/فني جديد</h3>
+          <form id="staffForm" class="admin-modal__form" style="margin-top:15px;">
+            <div class="admin-field">
+              <label for="staffName">الاسم الكامل *</label>
+              <input type="text" id="staffName" class="admin-input" required placeholder="مثال: أحمد الحربي">
+            </div>
+            <div class="admin-field">
+              <label for="staffPhone">رقم الجوال *</label>
+              <input type="tel" id="staffPhone" class="admin-input" required placeholder="05xxxxxxxx" dir="ltr">
+            </div>
+            <div class="admin-field">
+              <label for="staffEmail">البريد الإلكتروني (اختياري)</label>
+              <input type="email" id="staffEmail" class="admin-input" placeholder="name@domain.com" dir="ltr">
+            </div>
+            <div class="admin-field">
+              <label for="staffRole">الدور الوظيفي</label>
+              <select id="staffRole" class="admin-input">
+                <option value="technician" selected>فني صيانة / منفّذ خدمة</option>
+                <option value="coordinator">منسّق مواعيد / مشرف</option>
+              </select>
+            </div>
+            <div class="admin-field">
+              <label for="staffPin">رمز PIN السري (٤ أرقام) *</label>
+              <input type="text" id="staffPin" class="admin-input" required maxlength="4" pattern="\d{4}" placeholder="1234" dir="ltr">
+              <small class="admin-field__hint">يستخدمه الموظف للدخول لبوابة الفنيين وتسجيل بصمته.</small>
+            </div>
+            <div class="admin-field">
+              <label for="staffStatus">حالة الموظف</label>
+              <select id="staffStatus" class="admin-input">
+                <option value="active" selected>نشط</option>
+                <option value="inactive">غير نشط</option>
+              </select>
+            </div>
+            <div class="admin-modal__actions" style="margin-top:20px;">
+              <button type="button" class="btn btn--outline" id="staffModalCancel">إلغاء</button>
+              <button type="submit" class="btn btn--primary">حفظ الموظف</button>
+            </div>
+          </form>
+        </div>
+      </div>
+
+      <button type="button" id="saveBtn" class="btn btn--primary btn--lg admin-save-fab">حفظ جميع التغييرات</button>
+    </main>
+    <div id="toast" class="toast" hidden></div>
+  </div>
+
+  <script src="js/activities-catalog.js"></script>
+  <script src="js/services-catalog.js"></script>
+  <script src="js/content-templates/maintenance.js"></script>
+  <script src="js/content-templates/tech-digital.js"></script>
+  <script src="js/content-templates/it-support.js"></script>
+  <script src="js/content-templates/cleaning.js"></script>
+  <script src="js/content-templates/renovation.js"></script>
+  <script src="js/content-templates/security.js"></script>
+  <script src="js/content-templates/training.js"></script>
+  <script src="js/content-templates/barber-salon.js"></script>
+  <script src="js/content-templates/car-care.js"></script>
+  <script src="js/content-templates/healthcare.js"></script>
+  <script src="js/content-templates/spa-wellness.js"></script>
+  <script src="js/content-templates/fitness.js"></script>
+  <script src="js/content-templates/veterinary.js"></script>
+  <script src="js/content-templates/restaurant.js"></script>
+  <script src="js/content-templates/consulting.js"></script>
+  <script src="js/content-templates/photography.js"></script>
+  <script src="js/content-templates/tutoring.js"></script>
+  <script src="js/content-templates/hotels.js"></script>
+  <script src="js/content-templates/travel.js"></script>
+  <script src="js/content-templates/events.js"></script>
+  <script src="js/content-templates/commerce.js"></script>
+  <script src="js/ui-profiles/registry.js"></script>
+  <script src="js/content-resolver.js"></script>
+  <script src="js/social-catalog.js"></script>
+  <script src="js/themes-catalog.js"></script>
+  <script src="js/brand-logo.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="js/supabase-db.js"></script>
+  <script src="js/whatsapp-automation.js"></script>
+  <script src="js/services-store.js"></script>
+  <script src="js/booking-store.js"></script>
+  <script src="js/calendar-export.js"></script>
+  <script src="js/admin-content.js"></script>
+  <script src="js/admin.js"></script>
+  <script src="js/pwa.js"></script>
+  <script src="js/push-subscribe.js"></script>
+  <script src="js/admin-booking.js"></script>
+  <script src="js/admin-orders.js"></script>
+  <script src="js/admin-staff.js"></script>
+  <script src="js/admin-developer.js"></script>
+  <script src="js/admin-push.js"></script>
+</body>
+</html>

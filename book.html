@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <script src="js/theme-early.js"></script>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="robots" content="index, follow">
+  <meta name="theme-color" content="#1a1a2e">
+  <link rel="manifest" href="manifest.webmanifest">
+  <title>حجز موعد</title>
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/themes.css">
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="css/platform.css">
+  <link rel="stylesheet" href="css/booking.css">
+  <!-- Moyasar Form Styles -->
+  <link rel="stylesheet" href="https://cdn.moyasar.com/mpf/1.13.0/moyasar.css">
+  <link rel="stylesheet" href="css/pwa.css">
+  <link rel="icon" type="image/svg+xml" href="assets/logo.svg">
+</head>
+<body>
+
+  <header class="header" id="header">
+    <div class="container header__inner">
+      <a href="index.html" class="logo" aria-label="العودة للصفحة الرئيسية">
+        <span data-brand-logo data-size="48"></span>
+        <div class="logo__text">
+          <span class="logo__name" data-brand="name">اسم منشأتك</span>
+          <span class="logo__tagline" data-brand="tagline">وصف مختصر</span>
+        </div>
+      </a>
+      <nav class="nav" id="nav">
+        <a href="index.html#services">خدماتنا</a>
+        <a href="book.html" class="nav__active">حجز موعد</a>
+        <a href="index.html#contact">تواصل</a>
+        <a href="admin.html">الإدارة</a>
+      </nav>
+      <a href="#" class="btn btn--primary header__cta" data-contact="whatsapp" target="_blank" rel="noopener">واتساب</a>
+      <button class="menu-toggle" id="menuToggle" aria-label="فتح القائمة" aria-expanded="false">
+        <span></span><span></span><span></span>
+      </button>
+    </div>
+  </header>
+
+  <main class="booking-page">
+    <div class="container">
+      <div class="booking-hero">
+        <h1 id="bookingHeroTitle">احجز موعدك</h1>
+        <p id="bookingHeroDesc">اختر الخدمة والتاريخ والوقت — سنؤكد موعدك عبر واتساب.</p>
+        <p id="bookingHealthcareNote" class="booking-disclaimer" hidden>
+          للحالات الطارئة اتصل 997 — هذه الخدمة للمواعيد المجدولة فقط.
+        </p>
+      </div>
+
+      <nav class="activity-nav booking-activity-nav container" id="bookingActivityNav" aria-label="الأنشطة" hidden></nav>
+
+      <div id="bookingDisabled" class="booking-card booking-disabled" hidden>
+        <h2>الحجز غير متاح حالياً</h2>
+        <p>فعّل الخدمات من لوحة الإدارة أو تواصل معنا مباشرة.</p>
+        <a href="index.html#contact" class="btn btn--primary">تواصل معنا</a>
+      </div>
+
+      <div id="bookingApp" hidden>
+        <div class="booking-steps" id="bookingSteps"></div>
+
+        <div class="booking-card">
+          <div class="booking-panel" id="panelService">
+            <h2>١ — اختر الخدمة</h2>
+            <div class="booking-services" id="bookingServices"></div>
+            <div class="booking-actions">
+              <button type="button" class="btn btn--primary" id="btnToDate" disabled>التالي: التاريخ</button>
+            </div>
+          </div>
+
+          <div class="booking-panel" id="panelDate" hidden>
+            <h2>٢ — اختر التاريخ</h2>
+            <div class="booking-calendar-nav">
+              <button type="button" id="calPrev" aria-label="الشهر السابق">‹</button>
+              <h3 id="calTitle"></h3>
+              <button type="button" id="calNext" aria-label="الشهر التالي">›</button>
+            </div>
+            <div class="booking-calendar" id="bookingCalendar"></div>
+            <div class="booking-actions">
+              <button type="button" class="btn btn--outline" id="btnBackService">رجوع</button>
+              <button type="button" class="btn btn--primary" id="btnToTime" disabled>التالي: الوقت</button>
+            </div>
+          </div>
+
+          <div class="booking-panel" id="panelTime" hidden>
+            <h2>٣ — اختر الوقت</h2>
+            <p id="selectedDateLabel" class="admin-hint" style="margin-bottom:16px"></p>
+            <div class="booking-slots" id="bookingSlots"></div>
+            <p id="noSlotsMsg" class="booking-empty" hidden>لا توجد أوقات متاحة — اختر تاريخاً آخر.</p>
+            <div class="booking-actions">
+              <button type="button" class="btn btn--outline" id="btnBackDate">رجوع</button>
+              <button type="button" class="btn btn--primary" id="btnToForm" disabled>التالي: بياناتك</button>
+            </div>
+          </div>
+
+          <div class="booking-panel" id="panelForm" hidden>
+            <h2>٤ — بيانات التواصل</h2>
+            <div class="booking-summary" id="bookingSummary"></div>
+            <form class="booking-form" id="bookingForm">
+              <div class="booking-field">
+                <label for="customerName">الاسم الكامل *</label>
+                <input type="text" id="customerName" required autocomplete="name" placeholder="مثال: محمد العتيبي">
+              </div>
+              <div class="booking-field">
+                <label for="customerPhone">رقم الجوال *</label>
+                <input type="tel" id="customerPhone" required dir="ltr" inputmode="tel" autocomplete="tel" placeholder="05xxxxxxxx">
+              </div>
+              <div class="booking-field">
+                <label for="customerDistrict">الحي (اختياري)</label>
+                <input type="text" id="customerDistrict" placeholder="مثال: الروضة، الصفا">
+              </div>
+              <div id="bookingPartyBlock" class="booking-field" hidden>
+                <label for="partySize" id="partySizeLabel">عدد الأشخاص *</label>
+                <input type="number" id="partySize" min="1" max="50" placeholder="مثال: 4">
+              </div>
+              <div id="bookingNightsBlock" class="booking-field" hidden>
+                <label for="stayNights">عدد الليالي *</label>
+                <input type="number" id="stayNights" min="1" max="90" placeholder="مثال: 3">
+              </div>
+              <div id="bookingAddressBlock" class="booking-field" hidden>
+                <label for="customerAddress">العنوان / موقع الخدمة *</label>
+                <input type="text" id="customerAddress" placeholder="الشارع، المبنى، أو وصف الموقع">
+              </div>
+              <div class="booking-field">
+                <label for="customerNotes">ملاحظات (اختياري)</label>
+                <textarea id="customerNotes" rows="3" placeholder="أي تفاصيل إضافية"></textarea>
+              </div>
+              <div class="booking-actions">
+                <button type="button" class="btn btn--outline" id="btnBackTime">رجوع</button>
+                <button type="submit" class="btn btn--primary" id="btnSubmitForm">تأكيد وإرسال</button>
+              </div>
+            </form>
+          </div>
+
+          <div class="booking-panel" id="panelPayment" hidden>
+            <h2>٤ — الدفع وتأكيد الحجز</h2>
+            <p id="paymentAmountLabel" class="admin-hint" style="margin-bottom:20px; font-size:1.1rem; text-align:center; font-weight:600; color:var(--color-primary);"></p>
+            <!-- حاوية استمارة الدفع لميسر -->
+            <div class="mysr-form" style="margin-bottom:20px;"></div>
+            <div class="booking-actions">
+              <button type="button" class="btn btn--outline" id="btnBackForm">رجوع</button>
+            </div>
+          </div>
+
+          <div class="booking-panel" id="panelSuccess" hidden>
+            <div class="booking-success">
+              <div class="booking-success__icon">✅</div>
+              <h2>تم إرسال طلب الحجز</h2>
+              <p>سيُفتح واتساب لتأكيد الموعد. سنرد عليك في أقرب وقت.</p>
+              <div id="bookingCalendarLinks" class="booking-success__calendar"></div>
+              <a href="index.html" class="btn btn--outline">العودة للرئيسية</a>
+              <button type="button" class="btn btn--primary" id="btnNewBooking">حجز موعد آخر</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <script src="js/activities-catalog.js"></script>
+  <script src="js/services-catalog.js"></script>
+  <script src="js/content-templates/maintenance.js"></script>
+  <script src="js/content-templates/tech-digital.js"></script>
+  <script src="js/content-templates/it-support.js"></script>
+  <script src="js/content-templates/cleaning.js"></script>
+  <script src="js/content-templates/renovation.js"></script>
+  <script src="js/content-templates/security.js"></script>
+  <script src="js/content-templates/training.js"></script>
+  <script src="js/content-templates/barber-salon.js"></script>
+  <script src="js/content-templates/car-care.js"></script>
+  <script src="js/content-templates/healthcare.js"></script>
+  <script src="js/content-templates/spa-wellness.js"></script>
+  <script src="js/content-templates/fitness.js"></script>
+  <script src="js/content-templates/veterinary.js"></script>
+  <script src="js/content-templates/restaurant.js"></script>
+  <script src="js/content-templates/consulting.js"></script>
+  <script src="js/content-templates/photography.js"></script>
+  <script src="js/content-templates/tutoring.js"></script>
+  <script src="js/content-templates/hotels.js"></script>
+  <script src="js/content-templates/travel.js"></script>
+  <script src="js/content-templates/events.js"></script>
+  <script src="js/ui-profiles/registry.js"></script>
+  <script src="js/social-catalog.js"></script>
+  <script src="js/themes-catalog.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="js/supabase-db.js"></script>
+  <script src="js/services-store.js"></script>
+  <script src="js/booking-store.js"></script>
+  <script src="js/calendar-export.js"></script>
+  <!-- Moyasar Form SDK & Polyfills -->
+  <script src="https://polyfill.io/v3/polyfill.min.js?features=fetch"></script>
+  <script src="https://cdn.moyasar.com/mpf/1.13.0/moyasar.js"></script>
+  <script src="js/main.js"></script>
+  <script src="js/brand-logo.js"></script>
+  <script src="js/pwa.js"></script>
+  <script src="js/booking.js"></script>
+</body>
+</html>

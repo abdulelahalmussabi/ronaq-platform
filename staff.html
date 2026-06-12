@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#1a1a2e">
+  <title>بوابة الفنيين والموظفين | مكِّن</title>
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&family=Outfit:wght@400;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/themes.css">
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="css/platform.css">
+  <link rel="stylesheet" href="css/staff.css">
+  <link rel="icon" type="image/svg+xml" href="assets/logo.svg">
+</head>
+<body>
+
+  <header class="header">
+    <div class="container header__inner" style="justify-content:center;">
+      <div class="logo">
+        <span data-brand-logo data-size="40"></span>
+        <div class="logo__text" style="text-align:right;">
+          <span class="logo__name">بوابة الفنيين</span>
+          <span class="logo__tagline" id="brandTagline">منصة مكِّن لإدارة الخدمات</span>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <main class="staff-main container">
+    <!-- Login Panel -->
+    <div id="panelLogin" class="staff-card">
+      <div style="text-align:center; margin-bottom:20px;">
+        <span style="font-size:3rem;">🔐</span>
+        <h2 style="margin:8px 0 4px 0;">تسجيل دخول الموظفين</h2>
+        <p class="admin-hint">أدخل بياناتك المعتمدة للوصول لجدول مهامك اليومية.</p>
+      </div>
+
+      <form id="loginForm">
+        <div class="admin-field">
+          <label for="loginTenant">معرف المنشأة (Tenant Slug) *</label>
+          <input type="text" id="loginTenant" class="admin-input" required placeholder="مثال: default" dir="ltr">
+        </div>
+        <div class="admin-field">
+          <label for="loginPhone">رقم الجوال المسجل *</label>
+          <input type="tel" id="loginPhone" class="admin-input" required placeholder="05xxxxxxxx" dir="ltr">
+        </div>
+        <div class="admin-field">
+          <label for="loginPin">الرمز السري (PIN) *</label>
+          <input type="password" id="loginPin" class="admin-input" required maxlength="4" pattern="\d{4}" placeholder="••••" dir="ltr">
+        </div>
+        <button type="submit" class="btn btn--primary" style="width:100%; margin-top:15px; padding:12px;">تسجيل الدخول</button>
+        <button type="button" id="btnBiometricLogin" class="btn btn--outline" style="width:100%; margin-top:10px; display:none; justify-content:center; align-items:center; gap:8px;">
+          <span>☝️</span> دخول سريع بالبصمة / الوجه
+        </button>
+      </form>
+    </div>
+
+    <!-- Dashboard Panel -->
+    <div id="panelDashboard" class="staff-dashboard" hidden>
+      <div class="staff-card" style="margin-bottom:20px; border-right: 5px solid var(--color-primary);">
+        <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px;">
+          <div>
+            <span class="badge" style="background:#e3f2fd; color:#0d47a1; font-weight:bold;" id="staffRoleBadge">فني صيانة</span>
+            <h2 id="staffGreeting" style="margin:4px 0 0 0; color:var(--terracotta-900);">مرحباً بك</h2>
+            <p id="staffPhoneDisplay" class="admin-hint" style="margin:2px 0 0 0; font-family:monospace;"></p>
+          </div>
+          <div style="display:flex; gap:8px; flex-wrap:wrap;">
+            <button type="button" id="btnEnrollBiometrics" class="btn btn--outline btn--sm" style="font-size:0.75rem; border-color:var(--color-primary); color:var(--color-primary);">☝️ تفعيل البصمة</button>
+            <button type="button" id="btnLogout" class="btn btn--outline btn--sm" style="font-size:0.75rem; color:#c0392b; border-color:#c0392b15;">تسجيل الخروج</button>
+          </div>
+        </div>
+      </div>
+
+      <h3 style="margin-bottom:12px; color:var(--terracotta-900);">📋 المهام والمواعيد المسندة إليك</h3>
+      <div id="tasksList">جاري تحميل المهام...</div>
+    </div>
+  </main>
+
+  <div id="toast" class="toast" hidden></div>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="js/activities-catalog.js"></script>
+  <script src="js/services-catalog.js"></script>
+  <script src="js/services-store.js"></script>
+  <script src="js/supabase-db.js"></script>
+  <script src="js/booking-store.js"></script>
+  <script src="js/staff.js"></script>
+</body>
+</html>

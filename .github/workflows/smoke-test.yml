@@ -1,0 +1,45 @@
+name: Mken Platform Smoke Test CI
+
+on:
+  push:
+    branches: [ main, master ]
+  pull_request:
+    branches: [ main, master ]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    - name: Set up Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: 20
+
+    - name: Install dependencies (Root)
+      run: npm install
+
+    - name: Install dependencies (Scripts)
+      run: |
+        cd scripts
+        npm install
+
+    - name: Install Playwright Browsers
+      run: |
+        cd scripts
+        npx playwright install chromium --with-deps
+
+    - name: Start local server & run tests
+      run: |
+        # Start a local static server in the background
+        npx http-server . -p 8080 &
+        
+        # Wait for server to boot
+        sleep 3
+        
+        # Run Playwright E2E smoke tests
+        cd scripts
+        node smoke-test.mjs

@@ -1,0 +1,74 @@
+{
+  "enabledActivities": [
+    "barber-salon", "car-care", "healthcare", "spa-wellness", "fitness",
+    "veterinary", "restaurant", "consulting", "photography", "tutoring",
+    "hotels", "travel", "events", "commerce",
+    "maintenance", "tech-digital", "it-support", "cleaning", "renovation", "security", "training"
+  ],
+  "enabled": [
+    "mens-haircut", "beard-grooming",
+    "quick-wash", "full-wash",
+    "gp-consultation", "telemedicine",
+    "swedish-massage", "moroccan-bath",
+    "personal-training", "yoga-session",
+    "vet-checkup", "pet-grooming",
+    "table-booking", "private-dining",
+    "legal-consult", "real-estate-viewing",
+    "portrait-session", "event-photography",
+    "math-tutoring", "english-tutoring",
+    "standard-room", "deluxe-room", "umrah-package", "domestic-tour",
+    "wedding-hall", "conference-hall", "event-planning",
+    "general-product", "electronics-item", "grocery-box",
+    "ac", "web-design", "whatsapp-crm",
+    "computer", "cleaning", "painting",
+    "cameras", "computer-basics"
+  ],
+  "featuredActivity": "barber-salon",
+  "featured": "mens-haircut",
+  "heroFocus": "mens-haircut",
+  "theme": "midnight",
+  "phone": "9665056138908",
+  "social": {
+    "whatsapp": { "enabled": true, "value": "9665056138908" },
+    "instagram": { "enabled": false, "value": "" },
+    "twitter": { "enabled": false, "value": "" },
+    "facebook": { "enabled": false, "value": "" },
+    "tiktok": { "enabled": false, "value": "" },
+    "linkedin": { "enabled": false, "value": "" }
+  },
+  "brand": {
+    "name": "اسم منشأتك",
+    "tagline": "وصف مختصر لنشاطك",
+    "logo": ""
+  },
+  "activities": {},
+  "services": {},
+  "heroImage": "",
+  "booking": {
+    "enabled": true,
+    "slotDuration": 30,
+    "advanceDays": 14,
+    "workingDays": [0, 1, 2, 3, 4, 5, 6],
+    "workingHours": { "start": "09:00", "end": "22:00" },
+    "maxPerSlot": 3,
+    "reminders": {
+      "enabled": true,
+      "hoursBefore": [24, 2],
+      "windowMinutes": 60
+    }
+  },
+  "serviceArea": {
+    "enabled": false,
+    "displayOnHomepage": false,
+    "city": "جدة",
+    "center": { "lat": 21.485811, "lng": 39.192505 },
+    "radiusKm": 25,
+    "coverageNote": "",
+    "showAsFullCity": true
+  },
+  "push": {
+    "enabled": false,
+    "vapidPublicKey": ""
+  },
+  "updatedAt": "2026-06-11T20:00:00.000Z"
+}

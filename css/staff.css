@@ -1,0 +1,134 @@
+/* ─── بوابة الفنيين والموظفين — مكِّن ─── */
+
+:root {
+  --color-pending: #7f8c8d;
+  --color-started: #f39c12;
+  --color-completed: #2ecc71;
+}
+
+body {
+  background-color: #faf8f5;
+  font-family: 'IBM Plex Sans Arabic', 'Outfit', sans-serif;
+  color: var(--color-text);
+  margin: 0;
+  padding: 0;
+}
+
+.staff-main {
+  max-width: 600px;
+  margin: 20px auto;
+  padding: 0 15px;
+}
+
+.staff-card {
+  background: #ffffff;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  padding: 20px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.03);
+}
+
+.task-card {
+  background: #ffffff;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  padding: 16px;
+  margin-bottom: 16px;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.02);
+  transition: transform 0.2s, box-shadow 0.2s;
+  border-right-width: 6px;
+}
+
+.task-card:active {
+  transform: scale(0.98);
+}
+
+.task-card--pending {
+  border-right-color: var(--color-pending);
+}
+
+.task-card--started {
+  border-right-color: var(--color-started);
+}
+
+.task-card--completed {
+  border-right-color: var(--color-completed);
+}
+
+.task-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: start;
+  margin-bottom: 10px;
+}
+
+.task-title {
+  margin: 0;
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: var(--terracotta-900);
+}
+
+.task-meta {
+  font-size: 0.85rem;
+  color: var(--color-text-muted);
+  line-height: 1.6;
+}
+
+.task-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 15px;
+  flex-wrap: wrap;
+}
+
+.task-actions .btn {
+  flex: 1;
+  min-width: 100px;
+  padding: 8px 10px;
+  font-size: 0.85rem;
+  text-align: center;
+  justify-content: center;
+}
+
+.task-status-badge {
+  font-size: 0.75rem;
+  font-weight: 700;
+  padding: 4px 8px;
+  border-radius: 4px;
+}
+
+.status-badge--pending {
+  background-color: #f2f2f2;
+  color: var(--color-pending);
+}
+
+.status-badge--started {
+  background-color: #fef9ec;
+  color: var(--color-started);
+}
+
+.status-badge--completed {
+  background-color: #e8f8f0;
+  color: var(--color-completed);
+}
+
+/* Biometric login enhancements */
+#btnBiometricLogin {
+  background-color: #f0f7ff;
+  border-color: #a4cdff;
+  color: #0066cc;
+  transition: background-color 0.2s;
+}
+
+#btnBiometricLogin:hover {
+  background-color: #e0efff;
+}
+
+/* Loading animations */
+.loading-spinner {
+  text-align: center;
+  padding: 40px 0;
+  color: var(--color-primary);
+  font-weight: bold;
+}

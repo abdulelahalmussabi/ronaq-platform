@@ -1,0 +1,19 @@
+# Dependencies
+node_modules/
+
+# Environment configurations & keys
+.env
+.env.local
+.env.*.local
+config_private.json
+
+# Local temp data & caches
+.cache/
+.parcel-cache/
+dist/
+build/
+*.log
+
+# OS-specific files
+.DS_Store
+Thumbs.db
