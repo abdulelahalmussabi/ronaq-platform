@@ -800,8 +800,15 @@
 
         if (!data.serviceId || !data.date || !data.time || !data.customerName || !data.phone) return;
 
+        var config = store.loadConfig();
+        var wasStaffAssignedOrChanged = false;
+        var oldApt = null;
+
         if (editingId) {
-          var oldApt = bookingStore.getAppointments().find(function (a) { return a.id === editingId; });
+          oldApt = bookingStore.getAppointments().find(function (a) { return a.id === editingId; });
+          if (oldApt) {
+            wasStaffAssignedOrChanged = data.staffId && oldApt.staffId !== data.staffId;
+          }
           bookingStore.updateAppointment(editingId, data);
 
           if (oldApt && oldApt.status !== 'cancelled' && data.status !== 'cancelled') {
@@ -810,7 +817,6 @@
             var serviceChanged = oldApt.serviceId !== data.serviceId;
 
             if (dateChanged || timeChanged || serviceChanged) {
-              var config = store.loadConfig();
               if (config.whatsappApi && config.whatsappApi.enabled && config.whatsappApi.sendConfirmation) {
                 if (window.MkenWhatsappAutomation) {
                   window.MkenWhatsappAutomation.sendPostponement(Object.assign({}, oldApt, data), config)
@@ -822,7 +828,21 @@
             }
           }
         } else {
+          data.id = 'apt_' + Date.now().toString(36) + '_' + Math.random().toString(36).substring(2, 7);
+          wasStaffAssignedOrChanged = !!data.staffId;
           bookingStore.addAppointment(data);
+        }
+
+        // Trigger staff alert if assigned or changed
+        if (wasStaffAssignedOrChanged && window.MkenAdminStaff && window.MkenWhatsappAutomation) {
+          var staffList = window.MkenAdminStaff.getStaffList() || [];
+          var member = staffList.find(function (m) { return String(m.id) === String(data.staffId); });
+          if (member && member.phone) {
+            window.MkenWhatsappAutomation.sendTechnicianAssignment(member, Object.assign({ id: editingId || data.id }, data), config)
+              .catch(function (err) {
+                console.error('Failed to send technician assignment alert:', err);
+              });
+          }
         }
 
         selectedDay = data.date;

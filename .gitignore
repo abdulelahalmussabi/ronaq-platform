@@ -5,6 +5,7 @@ node_modules/
 .env
 .env.local
 .env.*.local
+examples/n8n/deploy-bundle/
 config_private.json
 
 # Local temp data & caches

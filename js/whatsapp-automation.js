@@ -20,7 +20,78 @@
     return cfg.whatsappApi || { enabled: false, provider: 'none' };
   }
 
-  function sendWhatsAppMessage(to, body, eventType, appointment, config) {
+  function reminderLeadText(hoursBefore) {
+    if (hoursBefore >= 24 && hoursBefore % 24 === 0) {
+      var days = hoursBefore / 24;
+      return days === 1 ? 'غداً' : 'خلال ' + days + ' أيام';
+    }
+    if (hoursBefore === 1) return 'خلال ساعة';
+    return 'خلال ' + hoursBefore + ' ساعات';
+  }
+
+  function parseTemplate(templateText, data) {
+    if (!templateText) return '';
+    var text = templateText;
+    text = text.replace(/{brandName}/g, data.brandName || '');
+    text = text.replace(/{customerName}/g, data.customerName || '');
+    text = text.replace(/{phone}/g, data.phone || '');
+    text = text.replace(/{serviceTitle}/g, data.serviceTitle || '');
+    text = text.replace(/{activityTitle}/g, data.activityTitle || '');
+    text = text.replace(/{date}/g, data.date || '');
+    text = text.replace(/{time}/g, data.time || '');
+    text = text.replace(/{appointmentId}/g, data.appointmentId || '');
+    text = text.replace(/{orderId}/g, data.orderId || '');
+    text = text.replace(/{orderItems}/g, data.orderItems || '');
+    text = text.replace(/{hoursBefore}/g, data.hoursBefore || '');
+    text = text.replace(/{reminderLeadText}/g, data.reminderLeadText || '');
+    return text;
+  }
+
+  function escapeRegExp(string) {
+    return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  }
+
+  function extractTemplateParameters(templateText, bodyText) {
+    if (!templateText) return [bodyText];
+
+    var placeholders = [];
+    var regex = /\{[a-zA-Z0-9_]+\}/g;
+    var match;
+    while ((match = regex.exec(templateText)) !== null) {
+      placeholders.push(match[0]);
+    }
+
+    if (placeholders.length === 0) {
+      return [bodyText];
+    }
+
+    var temp = templateText;
+    placeholders.forEach(function (ph) {
+      temp = temp.replace(ph, '__CAP_VAR__');
+    });
+
+    var escaped = escapeRegExp(temp);
+    var patternStr = '^' + escaped.replace(/__CAP_VAR__/g, '([\\s\\S]*?)') + '$';
+
+    try {
+      var pattern = new RegExp(patternStr);
+      var bodyMatch = bodyText.match(pattern);
+      if (bodyMatch) {
+        var params = [];
+        for (var i = 1; i < bodyMatch.length; i++) {
+          params.push(bodyMatch[i].trim());
+        }
+        return params;
+      }
+    } catch (e) {
+      console.warn('Failed to parse template regex matcher', e);
+    }
+
+    return [bodyText];
+  }
+
+
+  function sendWhatsAppMessage(to, body, eventType, appointment, config, imageUrl) {
     var waConfig = getWhatsAppConfig(config);
     if (!waConfig.enabled || waConfig.provider === 'none') {
       return Promise.reject(new Error('WhatsApp API disabled or not configured'));
@@ -35,16 +106,33 @@
     var promise;
     switch (provider) {
       case 'ultramsg':
-        promise = sendUltramsg(phone, body, waConfig.instanceId, waConfig.token);
+        promise = sendUltramsg(phone, body, waConfig.instanceId, waConfig.token, imageUrl);
         break;
       case 'twilio':
-        promise = sendTwilio(phone, body, waConfig.accountSid, waConfig.token, waConfig.fromNumber);
+        promise = sendTwilio(phone, body, waConfig.accountSid, waConfig.token, waConfig.fromNumber, imageUrl);
         break;
       case 'custom':
-        promise = sendCustom(phone, body, waConfig.url, waConfig.token, eventType, appointment);
+        promise = sendCustom(phone, body, waConfig.url, waConfig.token, eventType, appointment, imageUrl);
         break;
       case 'whatsapp_business':
-        promise = sendWhatsAppBusiness(phone, body, waConfig.phoneNumberId, waConfig.token, waConfig.templateName, waConfig.languageCode);
+        var rawTemplateText = '';
+        if (waConfig.templates) {
+          var tKey = eventType;
+          if (tKey === 'booking') tKey = 'confirmation';
+          if (tKey === 'order') tKey = 'order_confirmation';
+          rawTemplateText = waConfig.templates[tKey] || '';
+        }
+        promise = sendWhatsAppBusiness(
+          phone,
+          body,
+          waConfig.phoneNumberId,
+          waConfig.token,
+          waConfig.templateName,
+          waConfig.languageCode,
+          imageUrl,
+          waConfig.useMetaTemplateComponents,
+          rawTemplateText
+        );
         break;
       default:
         promise = Promise.reject(new Error('Unknown WhatsApp provider: ' + waConfig.provider));
@@ -74,15 +162,21 @@
     });
   }
 
-  function sendUltramsg(phone, body, instanceId, token) {
+  function sendUltramsg(phone, body, instanceId, token, imageUrl) {
     if (!instanceId || !token) {
       return Promise.reject(new Error('Missing Ultramsg instanceId or token'));
     }
-    var url = 'https://api.ultramsg.com/' + instanceId + '/messages/chat';
+    var useImage = !!imageUrl;
+    var url = 'https://api.ultramsg.com/' + instanceId + (useImage ? '/messages/image' : '/messages/chat');
     var params = new URLSearchParams();
     params.append('token', token);
     params.append('to', phone);
-    params.append('body', body);
+    if (useImage) {
+      params.append('image', imageUrl);
+      params.append('caption', body);
+    } else {
+      params.append('body', body);
+    }
 
     return fetch(url, {
       method: 'POST',
@@ -94,7 +188,7 @@
     });
   }
 
-  function sendTwilio(phone, body, accountSid, token, fromNumber) {
+  function sendTwilio(phone, body, accountSid, token, fromNumber, imageUrl) {
     if (!accountSid || !token || !fromNumber) {
       return Promise.reject(new Error('Missing Twilio credentials'));
     }
@@ -104,6 +198,9 @@
     params.append('Body', body);
     params.append('From', 'whatsapp:' + fromNumber.replace(/^\+?/, '+'));
     params.append('To', 'whatsapp:' + formattedTo);
+    if (imageUrl) {
+      params.append('MediaUrl', imageUrl);
+    }
 
     var headers = {
       'Content-Type': 'application/x-www-form-urlencoded',
@@ -120,7 +217,7 @@
     });
   }
 
-  function sendWhatsAppBusiness(phone, body, phoneNumberId, token, templateName, languageCode) {
+  function sendWhatsAppBusiness(phone, body, phoneNumberId, token, templateName, languageCode, imageUrl, useMetaTemplateComponents, rawTemplateText) {
     if (!phoneNumberId || !token) {
       return Promise.reject(new Error('Missing WhatsApp Business credentials'));
     }
@@ -131,7 +228,36 @@
     };
 
     var payload;
-    if (templateName) {
+    if (imageUrl) {
+      payload = {
+        messaging_product: "whatsapp",
+        recipient_type: "individual",
+        to: phone,
+        type: "image",
+        image: {
+          link: imageUrl,
+          caption: body
+        }
+      };
+    } else if (templateName) {
+      var parameters = [];
+      if (useMetaTemplateComponents && rawTemplateText) {
+        var paramVals = extractTemplateParameters(rawTemplateText, body);
+        parameters = paramVals.map(function (val) {
+          return {
+            type: "text",
+            text: val
+          };
+        });
+      } else {
+        parameters = [
+          {
+            type: "text",
+            text: body
+          }
+        ];
+      }
+
       payload = {
         messaging_product: "whatsapp",
         recipient_type: "individual",
@@ -145,12 +271,7 @@
           components: [
             {
               type: "body",
-              parameters: [
-                {
-                  type: "text",
-                  text: body
-                }
-              ]
+              parameters: parameters
             }
           ]
         }
@@ -166,6 +287,7 @@
         }
       };
     }
+
 
     var proxyUrl = '/api/webhook-proxy';
     return fetch(proxyUrl, {
@@ -191,7 +313,7 @@
     });
   }
 
-  function sendCustom(phone, body, webhookUrl, token, eventType, appointment) {
+  function sendCustom(phone, body, webhookUrl, token, eventType, appointment, imageUrl) {
     if (!webhookUrl) {
       return Promise.reject(new Error('Missing custom webhook URL'));
     }
@@ -207,6 +329,9 @@
       event: eventType,
       appointment: appointment
     };
+    if (imageUrl) {
+      payload.imageUrl = imageUrl;
+    }
 
     var proxyUrl = '/api/webhook-proxy';
     return fetch(proxyUrl, {
@@ -225,6 +350,7 @@
 
   function logWhatsappMessageLocalAndRemote(logObj, config) {
     var db = window.MkenSupabaseDb;
+    var store = window.MkenServicesStore;
     var tenantSlug = store ? store.getCurrentTenantSlug() : 'default';
 
     if (db && db.isConfigured()) {
@@ -257,17 +383,38 @@
     var act = store.getResolvedActivity(appointment.activityId, config);
     var activityTitle = act ? act.title : '';
 
-    var message = bookingStore.buildWhatsAppMessage(
-      brandName,
-      appointment,
-      serviceTitle,
-      activityTitle
-    );
+    var waConfig = getWhatsAppConfig(config);
+    var customTemplate = waConfig.templates && waConfig.templates.confirmation;
 
-    message = message.replace('طلب حجز موعد', 'تم تأكيد موعدك بنجاح');
-    message = message.replace('يُرجى تأكيد الموعد', 'نتطلع لخدمتك!');
+    var message;
+    if (customTemplate) {
+      message = parseTemplate(customTemplate, {
+        brandName: brandName,
+        customerName: appointment.customerName,
+        phone: appointment.phone,
+        serviceTitle: serviceTitle,
+        activityTitle: activityTitle,
+        date: formatDateArabic(appointment.date),
+        time: formatTimeArabic(appointment.time),
+        appointmentId: appointment.id
+      });
+    } else {
+      message = bookingStore.buildWhatsAppMessage(
+        brandName,
+        appointment,
+        serviceTitle,
+        activityTitle
+      );
+      message = message.replace('طلب حجز موعد', 'تم تأكيد موعدك بنجاح');
+      message = message.replace('يُرجى تأكيد الموعد', 'نتطلع لخدمتك!');
+    }
 
-    return sendWhatsAppMessage(appointment.phone, message, 'confirmation', appointment, config);
+    var imageUrl = null;
+    if (waConfig.sendQrCode) {
+      imageUrl = 'https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=' + encodeURIComponent('BOOKING-' + appointment.id);
+    }
+
+    return sendWhatsAppMessage(appointment.phone, message, 'confirmation', appointment, config, imageUrl);
   }
 
   function sendReminderMessage(appointment, hoursBefore, config) {
@@ -281,13 +428,33 @@
     var act = store.getResolvedActivity(appointment.activityId, config);
     var activityTitle = act ? act.title : '';
 
-    var message = bookingStore.buildReminderMessage(
-      brandName,
-      appointment,
-      serviceTitle,
-      activityTitle,
-      hoursBefore
-    );
+    var waConfig = getWhatsAppConfig(config);
+    var customTemplate = waConfig.templates && waConfig.templates.reminder;
+
+    var message;
+    if (customTemplate) {
+      var leadText = reminderLeadText(hoursBefore);
+      message = parseTemplate(customTemplate, {
+        brandName: brandName,
+        customerName: appointment.customerName,
+        phone: appointment.phone,
+        serviceTitle: serviceTitle,
+        activityTitle: activityTitle,
+        date: formatDateArabic(appointment.date),
+        time: formatTimeArabic(appointment.time),
+        appointmentId: appointment.id,
+        hoursBefore: hoursBefore,
+        reminderLeadText: leadText
+      });
+    } else {
+      message = bookingStore.buildReminderMessage(
+        brandName,
+        appointment,
+        serviceTitle,
+        activityTitle,
+        hoursBefore
+      );
+    }
 
     return sendWhatsAppMessage(appointment.phone, message, 'reminder', appointment, config);
   }
@@ -327,20 +494,37 @@
     var act = store.getResolvedActivity(appointment.activityId, config);
     var activityTitle = act ? act.title : '';
 
-    var lines = [
-      'تم إلغاء موعدك — ' + brandName,
-      '━━━━━━━━━━━━━━',
-      'مرحباً ' + appointment.customerName + '،',
-      'نود إفادتك بأنه تم إلغاء موعدك:',
-    ];
-    if (activityTitle) lines.push('النشاط: ' + activityTitle);
-    lines.push(
-      'الخدمة: ' + serviceTitle,
-      'التاريخ: ' + formatDateArabic(appointment.date),
-      'الوقت: ' + formatTimeArabic(appointment.time)
-    );
-    lines.push('━━━━━━━━━━━━━━', 'نشكرك لتفهمك.');
-    var message = lines.join('\n');
+    var waConfig = getWhatsAppConfig(config);
+    var customTemplate = waConfig.templates && waConfig.templates.cancellation;
+
+    var message;
+    if (customTemplate) {
+      message = parseTemplate(customTemplate, {
+        brandName: brandName,
+        customerName: appointment.customerName,
+        phone: appointment.phone,
+        serviceTitle: serviceTitle,
+        activityTitle: activityTitle,
+        date: formatDateArabic(appointment.date),
+        time: formatTimeArabic(appointment.time),
+        appointmentId: appointment.id
+      });
+    } else {
+      var lines = [
+        'تم إلغاء موعدك — ' + brandName,
+        '━━━━━━━━━━━━━━',
+        'مرحباً ' + appointment.customerName + '،',
+        'نود إفادتك بأنه تم إلغاء موعدك:',
+      ];
+      if (activityTitle) lines.push('النشاط: ' + activityTitle);
+      lines.push(
+        'الخدمة: ' + serviceTitle,
+        'التاريخ: ' + formatDateArabic(appointment.date),
+        'الوقت: ' + formatTimeArabic(appointment.time)
+      );
+      lines.push('━━━━━━━━━━━━━━', 'نشكرك لتفهمك.');
+      message = lines.join('\n');
+    }
 
     return sendWhatsAppMessage(appointment.phone, message, 'cancellation', appointment, config);
   }
@@ -355,25 +539,186 @@
     var act = store.getResolvedActivity(appointment.activityId, config);
     var activityTitle = act ? act.title : '';
 
+    var waConfig = getWhatsAppConfig(config);
+    var customTemplate = waConfig.templates && waConfig.templates.reschedule;
+
+    var message;
+    if (customTemplate) {
+      message = parseTemplate(customTemplate, {
+        brandName: brandName,
+        customerName: appointment.customerName,
+        phone: appointment.phone,
+        serviceTitle: serviceTitle,
+        activityTitle: activityTitle,
+        date: formatDateArabic(appointment.date),
+        time: formatTimeArabic(appointment.time),
+        appointmentId: appointment.id
+      });
+    } else {
+      var lines = [
+        'تعديل موعدك — ' + brandName,
+        '━━━━━━━━━━━━━━',
+        'مرحباً ' + appointment.customerName + '،',
+        'نود إفادتك بأنه تم تعديل موعد حجزك إلى:',
+      ];
+      if (activityTitle) lines.push('النشاط: ' + activityTitle);
+      lines.push(
+        'الخدمة: ' + serviceTitle,
+        'التاريخ: ' + formatDateArabic(appointment.date),
+        'الوقت: ' + formatTimeArabic(appointment.time)
+      );
+      if (appointment.partySize) lines.push('عدد الأشخاص: ' + appointment.partySize);
+      if (appointment.nights) lines.push('عدد الليالي: ' + appointment.nights);
+      if (appointment.locationAddress) lines.push('العنوان: ' + appointment.locationAddress);
+      lines.push('━━━━━━━━━━━━━━', 'نتطلع لخدمتك!');
+      message = lines.join('\n');
+    }
+
+    return sendWhatsAppMessage(appointment.phone, message, 'reschedule', appointment, config);
+  }
+
+  function sendOrderConfirmationMessage(order, config) {
+    var store = window.MkenServicesStore;
+    var orderStore = window.MkenOrderStore;
+    if (!store || !orderStore) return Promise.reject(new Error('Stores not loaded'));
+
+    var brandName = store.getBrand(config).name;
+    var waConfig = getWhatsAppConfig(config);
+    if (!waConfig.enabled || waConfig.sendOrderConfirmation === false) {
+      return Promise.resolve();
+    }
+
+    var serviceTitle = order.serviceTitle || '';
+    var activityTitle = order.activityTitle || '';
+
+    var itemsList = Array.isArray(order.items) ? order.items : [];
+    if (!itemsList.length && order.items) {
+      try {
+        itemsList = typeof order.items === 'string' ? JSON.parse(order.items) : order.items;
+      } catch (e) {}
+    }
+
+    var orderItemsText = '';
+    itemsList.forEach(function (line, i) {
+      var row = (i + 1) + '. ' + (line.icon || '🛒') + ' ' + line.serviceTitle + ' × ' + line.quantity;
+      if (line.priceLabel) row += ' (' + line.priceLabel + ')';
+      orderItemsText += (orderItemsText ? '\n' : '') + row;
+    });
+
+    var customTemplate = waConfig.templates && waConfig.templates.order_confirmation;
+    var message;
+    if (customTemplate) {
+      message = parseTemplate(customTemplate, {
+        brandName: brandName,
+        customerName: order.customerName || order.customer_name,
+        phone: order.phone,
+        serviceTitle: serviceTitle,
+        activityTitle: activityTitle,
+        orderId: order.id,
+        orderItems: orderItemsText
+      });
+    } else {
+      message = orderStore.buildWhatsAppMessage(
+        brandName,
+        order,
+        serviceTitle,
+        activityTitle
+      );
+      message = message.replace('طلب شراء', 'تم دفع وتأكيد طلب الشراء بنجاح 🎉');
+      message = message.replace('يُرجى تأكيد الطلب والسعر النهائي', 'تم سداد الحساب إلكترونياً بنجاح! شكراً لتعاملك معنا! سنقوم بالتوصيل قريباً.');
+    }
+
+    var imageUrl = null;
+    if (waConfig.sendQrCode) {
+      imageUrl = 'https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=' + encodeURIComponent('ORDER-' + order.id);
+    }
+
+    return sendWhatsAppMessage(order.phone, message, 'order_confirmation', null, config, imageUrl);
+  }
+
+  function sendOwnerAlertMessage(data, type, config) {
+    var store = window.MkenServicesStore;
+    if (!store) return Promise.reject(new Error('Store not loaded'));
+
+    var waConfig = getWhatsAppConfig(config);
+    if (!waConfig.enabled || !waConfig.sendOwnerAlert) {
+      return Promise.resolve();
+    }
+
+    var ownerPhone = waConfig.ownerAlertPhone || store.getBrand(config).phone || config.phone;
+    ownerPhone = cleanPhone(ownerPhone);
+    if (!ownerPhone) {
+      return Promise.reject(new Error('Owner phone number not set'));
+    }
+
+    var brandName = store.getBrand(config).name;
+    var lines = [];
+    if (type === 'booking') {
+      var sTitle = data.serviceTitle || '';
+      if (!sTitle && data.serviceId) {
+        var sObj = store.getServiceById(data.serviceId);
+        sTitle = sObj ? sObj.title : data.serviceId;
+      }
+      lines = [
+        '🔔 حجز جديد — ' + brandName,
+        '━━━━━━━━━━━━━━',
+        'تم تسجيل حجز موعد جديد:',
+        'العميل: ' + (data.customerName || data.customer_name || ''),
+        'الجوال: ' + (data.phone || ''),
+        'الخدمة: ' + sTitle,
+        'التاريخ: ' + formatDateArabic(data.date),
+        'الوقت: ' + formatTimeArabic(data.time)
+      ];
+    } else {
+      lines = [
+        '🔔 طلب شراء جديد — ' + brandName,
+        '━━━━━━━━━━━━━━',
+        'تم تقديم طلب شراء جديد:',
+        'العميل: ' + (data.customerName || data.customer_name || ''),
+        'الجوال: ' + (data.phone || ''),
+        'القيمة: ' + (data.priceLabel || data.paymentAmount || '')
+      ];
+    }
+    lines.push('━━━━━━━━━━━━━━', 'يرجى مراجعة لوحة الإدارة.');
+    var message = lines.join('\n');
+
+    return sendWhatsAppMessage(ownerPhone, message, 'owner_alert', null, config);
+  }
+
+  function sendTechnicianAssignmentMessage(member, appointment, config) {
+    var store = window.MkenServicesStore;
+    if (!store) return Promise.reject(new Error('Store not loaded'));
+
+    var brandName = store.getBrand(config).name;
+    var service = store.getServiceById(appointment.serviceId);
+    var serviceTitle = service ? service.title : appointment.serviceId;
+    var act = store.getResolvedActivity(appointment.activityId, config);
+    var activityTitle = act ? act.title : '';
+
+    var phone = cleanPhone(member.phone);
+    if (!phone) {
+      return Promise.reject(new Error('Invalid staff phone number'));
+    }
+
     var lines = [
-      'تعديل موعدك — ' + brandName,
+      '🛠️ مهمة جديدة مسندة إليك — ' + brandName,
       '━━━━━━━━━━━━━━',
-      'مرحباً ' + appointment.customerName + '،',
-      'نود إفادتك بأنه تم تعديل موعد حجزك إلى:',
-    ];
-    if (activityTitle) lines.push('النشاط: ' + activityTitle);
-    lines.push(
+      'أهلاً ' + member.name + '،',
+      'تم إسناد مهمة جديدة لك:',
+      'العميل: ' + appointment.customerName,
+      'الجوال: ' + appointment.phone,
       'الخدمة: ' + serviceTitle,
       'التاريخ: ' + formatDateArabic(appointment.date),
       'الوقت: ' + formatTimeArabic(appointment.time)
-    );
-    if (appointment.partySize) lines.push('عدد الأشخاص: ' + appointment.partySize);
-    if (appointment.nights) lines.push('عدد الليالي: ' + appointment.nights);
+    ];
+    if (activityTitle) lines.push('النشاط: ' + activityTitle);
+    if (appointment.district) lines.push('الحي/المنطقة: ' + appointment.district);
     if (appointment.locationAddress) lines.push('العنوان: ' + appointment.locationAddress);
-    lines.push('━━━━━━━━━━━━━━', 'نتطلع لخدمتك!');
+    if (appointment.notes) lines.push('ملاحظات: ' + appointment.notes);
+    lines.push('━━━━━━━━━━━━━━', 'يرجى مراجعة تفاصيل المهمة.');
     var message = lines.join('\n');
 
-    return sendWhatsAppMessage(appointment.phone, message, 'reschedule', appointment, config);
+    return sendWhatsAppMessage(phone, message, 'staff_assignment', appointment, config);
   }
 
   function processAutomatedReminders(config) {
@@ -412,6 +757,9 @@
     sendReminder: sendReminderMessage,
     sendCancellation: sendCancellationMessage,
     sendPostponement: sendPostponementMessage,
+    sendOrderConfirmation: sendOrderConfirmationMessage,
+    sendOwnerAlert: sendOwnerAlertMessage,
+    sendTechnicianAssignment: sendTechnicianAssignmentMessage,
     processQueue: processAutomatedReminders,
     sendMessage: sendWhatsAppMessage,
   };

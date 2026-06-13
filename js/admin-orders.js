@@ -194,6 +194,13 @@
     var updated = orderStore.updateOrder(id, { status: status });
     if (updated) {
       toast('تم تحديث حالة الطلب بنجاح');
+      if (status === 'confirmed' && window.MkenWhatsappAutomation) {
+        var config = window.MkenServicesStore ? window.MkenServicesStore.loadConfig() : {};
+        window.MkenWhatsappAutomation.sendOrderConfirmation(updated, config)
+          .catch(function (err) {
+            console.error('Failed to send order confirmation:', err);
+          });
+      }
       loadOrders();
     } else {
       toast('فشل تحديث حالة الطلب', 'error');

@@ -387,11 +387,17 @@
     var svc = store.getServiceById(updatedApt.serviceId);
     var actTitle = req ? (req.activityTitle || '') : '';
 
-    if (config.whatsappApi && config.whatsappApi.enabled && config.whatsappApi.sendConfirmation) {
+    if (config.whatsappApi && config.whatsappApi.enabled) {
       if (window.MkenWhatsappAutomation) {
-        window.MkenWhatsappAutomation.sendConfirmation(updatedApt, config)
+        if (config.whatsappApi.sendConfirmation) {
+          window.MkenWhatsappAutomation.sendConfirmation(updatedApt, config)
+            .catch(function (err) {
+              console.error('Failed to send auto-confirmation:', err);
+            });
+        }
+        window.MkenWhatsappAutomation.sendOwnerAlert(updatedApt, 'booking', config)
           .catch(function (err) {
-            console.error('Failed to send auto-confirmation:', err);
+            console.error('Failed to send owner alert:', err);
           });
       }
     }
@@ -569,6 +575,13 @@
 
     lastSubmittedAppointment = appointment;
     renderSuccessCalendarLinks();
+
+    if (window.MkenWhatsappAutomation) {
+      window.MkenWhatsappAutomation.sendOwnerAlert(appointment, 'booking', config)
+        .catch(function (err) {
+          console.error('Failed to send owner alert:', err);
+        });
+    }
 
     window.open(getWhatsAppUrl(message), '_blank', 'noopener');
     showPanel('panelSuccess');

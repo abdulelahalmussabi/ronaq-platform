@@ -3,7 +3,7 @@
   "nodes": [
     {
       "parameters": {
-        "content": "## إعداد سريع\n\n1. عيّن متغيرات البيئة في n8n:\n   - `MKEN_WEBHOOK_TOKEN` (نفس التوكن في لوحة مكِّن)\n   - `ULTRAMSG_INSTANCE_ID`\n   - `ULTRAMSG_TOKEN`\n\n2. فعّل الـ Workflow (Active = ON)\n\n3. انسخ رابط الإنتاج من عقدة Webhook:\n   `https://YOUR-N8N/webhook/mken-whatsapp`\n\n4. الصق الرابط في لوحة مكِّن → Custom Webhook → API URL",
+        "content": "## إعداد فردي (Legacy)\n\n⚠️ للاستخدام الفردي فقط. للـ SaaS متعدد المستأجرين استورد:\n`mken-whatsapp-saas.workflow.json`\n\n1. عيّن متغيرات البيئة في n8n:\n   - `MKEN_WEBHOOK_TOKEN` (نفس التوكن في لوحة مكِّن)\n   - `ULTRAMSG_INSTANCE_ID`\n   - `ULTRAMSG_TOKEN`\n\n2. فعّل الـ Workflow (Active = ON)\n\n3. انسخ رابط الإنتاج:\n   `https://YOUR-N8N/webhook/mken-whatsapp`",
         "height": 340,
         "width": 420
       },

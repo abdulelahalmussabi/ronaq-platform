@@ -21,16 +21,22 @@
     if (_client) return _client;
 
     try {
-      var raw = localStorage.getItem('mken_platform_config');
-      if (raw) {
-        var config = JSON.parse(raw);
-        if (config && config.supabase && config.supabase.enabled) {
-          var url = config.supabase.url;
-          var key = config.supabase.key;
-          if (url && key && window.supabase) {
-            _client = window.supabase.createClient(url, key);
-            return _client;
-          }
+      var config = null;
+      if (window.MkenServicesStore && typeof window.MkenServicesStore.loadConfig === 'function') {
+        config = window.MkenServicesStore.loadConfig();
+      }
+      if (!config) {
+        var raw = localStorage.getItem('mken_platform_config');
+        if (raw) {
+          config = JSON.parse(raw);
+        }
+      }
+      if (config && config.supabase) {
+        var url = config.supabase.url;
+        var key = config.supabase.key;
+        if (url && key && window.supabase) {
+          _client = window.supabase.createClient(url, key);
+          return _client;
         }
       }
     } catch (e) {

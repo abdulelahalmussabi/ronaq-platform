@@ -189,15 +189,33 @@ module.exports = async function handler(req, res) {
           const activityTitle = activityOverride.title || apt.activity_id;
           
           const brandName = (tenantConfig.brand && tenantConfig.brand.name) || 'المنشأة الموقرة';
-          const body = buildReminderMessage(brandName, {
-            customerName: apt.customer_name,
-            phone: apt.phone,
-            date: apt.date,
-            time: apt.time,
-            partySize: apt.party_size,
-            nights: apt.nights,
-            locationAddress: apt.location_address
-          }, serviceTitle, activityTitle, hours);
+          const customTemplate = wa.templates && wa.templates.reminder;
+          let body = '';
+          if (customTemplate) {
+            const leadText = reminderLeadText(hours);
+            body = parseTemplate(customTemplate, {
+              brandName,
+              customerName: apt.customer_name,
+              phone: apt.phone,
+              serviceTitle,
+              activityTitle,
+              date: formatDateArabic(apt.date),
+              time: formatTimeArabic(apt.time),
+              appointmentId: apt.id,
+              hoursBefore: hours,
+              reminderLeadText: leadText
+            });
+          } else {
+            body = buildReminderMessage(brandName, {
+              customerName: apt.customer_name,
+              phone: apt.phone,
+              date: apt.date,
+              time: apt.time,
+              partySize: apt.party_size,
+              nights: apt.nights,
+              locationAddress: apt.location_address
+            }, serviceTitle, activityTitle, hours);
+          }
 
           log(`Sending reminder ${hours}h for appointment ${apt.id} to ${apt.phone}...`);
 
@@ -331,7 +349,7 @@ async function logWhatsappMessageServer(supabase, logObj, tenantSlug) {
   }
 }
 
-async function sendWhatsAppMessage(to, body, eventType, appointment, config, supabase, tenantSlug = 'default') {
+async function sendWhatsAppMessage(to, body, eventType, appointment, config, supabase, tenantSlug = 'default', imageUrl = null) {
   const waConfig = config.whatsappApi || {};
   if (!waConfig.enabled) throw new Error('WhatsApp API is disabled');
 
@@ -343,17 +361,32 @@ async function sendWhatsAppMessage(to, body, eventType, appointment, config, sup
 
   switch (provider) {
     case 'ultramsg':
-      promise = sendUltramsg(phone, body, waConfig.instanceId, waConfig.token);
+      promise = sendUltramsg(phone, body, waConfig.instanceId, waConfig.token, imageUrl);
       break;
     case 'twilio':
-      promise = sendTwilio(phone, body, waConfig.accountSid, waConfig.token, waConfig.fromNumber);
+      promise = sendTwilio(phone, body, waConfig.accountSid, waConfig.token, waConfig.fromNumber, imageUrl);
       break;
     case 'custom':
-      promise = sendCustom(phone, body, waConfig.url, waConfig.token, eventType, appointment);
+      promise = sendCustom(phone, body, waConfig.url, waConfig.token, eventType, appointment, imageUrl);
       break;
-    case 'whatsapp_business':
-      promise = sendWhatsAppBusiness(phone, body, waConfig.phoneNumberId, waConfig.token, waConfig.templateName, waConfig.languageCode);
+    case 'whatsapp_business': {
+      let tKey = eventType;
+      if (tKey === 'booking') tKey = 'confirmation';
+      if (tKey === 'order') tKey = 'order_confirmation';
+      const rawTemplateText = (waConfig.templates && waConfig.templates[tKey]) || '';
+      promise = sendWhatsAppBusiness(
+        phone,
+        body,
+        waConfig.phoneNumberId,
+        waConfig.token,
+        waConfig.templateName,
+        waConfig.languageCode,
+        imageUrl,
+        waConfig.useMetaTemplateComponents,
+        rawTemplateText
+      );
       break;
+    }
     default:
       throw new Error('Unsupported provider: ' + provider);
   }
@@ -383,12 +416,18 @@ async function sendWhatsAppMessage(to, body, eventType, appointment, config, sup
   }
 }
 
-async function sendUltramsg(phone, body, instanceId, token) {
-  const url = `https://api.ultramsg.com/${instanceId}/messages/chat`;
+async function sendUltramsg(phone, body, instanceId, token, imageUrl) {
+  const useImage = !!imageUrl;
+  const url = `https://api.ultramsg.com/${instanceId}/messages/${useImage ? 'image' : 'chat'}`;
   const params = new URLSearchParams();
   params.append('token', token);
   params.append('to', phone);
-  params.append('body', body);
+  if (useImage) {
+    params.append('image', imageUrl);
+    params.append('caption', body);
+  } else {
+    params.append('body', body);
+  }
 
   const res = await fetch(url, {
     method: 'POST',
@@ -399,13 +438,16 @@ async function sendUltramsg(phone, body, instanceId, token) {
   return res.json();
 }
 
-async function sendTwilio(phone, body, accountSid, token, fromNumber) {
+async function sendTwilio(phone, body, accountSid, token, fromNumber, imageUrl) {
   const url = `https://api.twilio.com/2010-04-01/Accounts/${accountSid}/Messages.json`;
   const formattedTo = '+' + phone;
   const params = new URLSearchParams();
   params.append('Body', body);
   params.append('From', 'whatsapp:' + fromNumber.replace(/^\+?/, '+'));
   params.append('To', 'whatsapp:' + formattedTo);
+  if (imageUrl) {
+    params.append('MediaUrl', imageUrl);
+  }
 
   const res = await fetch(url, {
     method: 'POST',
@@ -419,7 +461,7 @@ async function sendTwilio(phone, body, accountSid, token, fromNumber) {
   return res.json();
 }
 
-async function sendWhatsAppBusiness(phone, body, phoneNumberId, token, templateName, languageCode) {
+async function sendWhatsAppBusiness(phone, body, phoneNumberId, token, templateName, languageCode, imageUrl, useMetaTemplateComponents = false, rawTemplateText = '') {
   if (!phoneNumberId || !token) throw new Error('Missing WhatsApp Business credentials');
 
   const url = `https://graph.facebook.com/v18.0/${phoneNumberId}/messages`;
@@ -429,7 +471,34 @@ async function sendWhatsAppBusiness(phone, body, phoneNumberId, token, templateN
   };
 
   let payload;
-  if (templateName) {
+  if (imageUrl) {
+    payload = {
+      messaging_product: "whatsapp",
+      recipient_type: "individual",
+      to: phone,
+      type: "image",
+      image: {
+        link: imageUrl,
+        caption: body
+      }
+    };
+  } else if (templateName) {
+    let parameters = [];
+    if (useMetaTemplateComponents && rawTemplateText) {
+      const paramVals = extractTemplateParameters(rawTemplateText, body);
+      parameters = paramVals.map(val => ({
+        type: "text",
+        text: val
+      }));
+    } else {
+      parameters = [
+        {
+          type: "text",
+          text: body
+        }
+      ];
+    }
+
     payload = {
       messaging_product: "whatsapp",
       recipient_type: "individual",
@@ -443,12 +512,7 @@ async function sendWhatsAppBusiness(phone, body, phoneNumberId, token, templateN
         components: [
           {
             type: "body",
-            parameters: [
-              {
-                type: "text",
-                text: body
-              }
-            ]
+            parameters: parameters
           }
         ]
       }
@@ -465,38 +529,43 @@ async function sendWhatsAppBusiness(phone, body, phoneNumberId, token, templateN
     };
   }
 
+
   const res = await fetch(url, {
     method: 'POST',
-    headers: headers,
+    headers,
     body: JSON.stringify(payload)
   });
 
   if (!res.ok) {
-    let errorMsg = `HTTP Status ${res.status}`;
+    let errorMsg = `WhatsApp Business status ${res.status}`;
     try {
       const errData = await res.json();
       if (errData && errData.error && errData.error.message) {
         errorMsg = errData.error.message;
       }
     } catch (e) {}
-    throw new Error('WhatsApp Business API failed: ' + errorMsg);
+    throw new Error(errorMsg);
   }
   return res.json();
 }
 
-async function sendCustom(phone, body, webhookUrl, token, eventType, appointment) {
+async function sendCustom(phone, body, webhookUrl, token, eventType, appointment, imageUrl) {
+  if (!webhookUrl) throw new Error('Missing custom webhook URL');
   const headers = { 'Content-Type': 'application/json' };
   if (token) headers['Authorization'] = 'Bearer ' + token;
+
+  const payload = {
+    to: phone,
+    body,
+    event: eventType,
+    appointment
+  };
+  if (imageUrl) payload.imageUrl = imageUrl;
 
   const res = await fetch(webhookUrl, {
     method: 'POST',
     headers: headers,
-    body: JSON.stringify({
-      to: phone,
-      body: body,
-      event: eventType,
-      appointment: appointment
-    })
+    body: JSON.stringify(payload)
   });
   if (!res.ok) throw new Error('Custom Webhook failed, status ' + res.status);
   return res.text();
@@ -559,3 +628,64 @@ function buildReminderMessage(brandName, appointment, serviceTitle, activityTitl
   lines.push('━━━━━━━━━━━━━━', 'نتطلع لرؤيتك!', 'للاستفسار رد على هذه الرسالة.');
   return lines.join('\n');
 }
+
+function parseTemplate(templateText, data) {
+  if (!templateText) return '';
+  return templateText
+    .replace(/{brandName}/g, data.brandName || '')
+    .replace(/{customerName}/g, data.customerName || '')
+    .replace(/{phone}/g, data.phone || '')
+    .replace(/{serviceTitle}/g, data.serviceTitle || '')
+    .replace(/{activityTitle}/g, data.activityTitle || '')
+    .replace(/{date}/g, data.date || '')
+    .replace(/{time}/g, data.time || '')
+    .replace(/{appointmentId}/g, data.appointmentId || '')
+    .replace(/{orderId}/g, data.orderId || '')
+    .replace(/{orderItems}/g, data.orderItems || '')
+    .replace(/{hoursBefore}/g, data.hoursBefore || '')
+    .replace(/{reminderLeadText}/g, data.reminderLeadText || '');
+}
+
+function escapeRegExp(string) {
+  return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
+function extractTemplateParameters(templateText, bodyText) {
+  if (!templateText) return [bodyText];
+
+  const placeholders = [];
+  const regex = /\{[a-zA-Z0-9_]+\}/g;
+  let match;
+  while ((match = regex.exec(templateText)) !== null) {
+    placeholders.push(match[0]);
+  }
+
+  if (placeholders.length === 0) {
+    return [bodyText];
+  }
+
+  let temp = templateText;
+  placeholders.forEach(ph => {
+    temp = temp.replace(ph, '__CAP_VAR__');
+  });
+
+  const escaped = escapeRegExp(temp);
+  const patternStr = '^' + escaped.replace(/__CAP_VAR__/g, '([\\s\\S]*?)') + '$';
+
+  try {
+    const pattern = new RegExp(patternStr);
+    const bodyMatch = bodyText.match(pattern);
+    if (bodyMatch) {
+      const params = [];
+      for (let i = 1; i < bodyMatch.length; i++) {
+        params.push(bodyMatch[i].trim());
+      }
+      return params;
+    }
+  } catch (e) {
+    console.warn('Failed to parse template regex matcher', e);
+  }
+
+  return [bodyText];
+}
+

@@ -278,6 +278,17 @@
     orderStore.clearCart(activeActivityId);
     renderCartBar();
 
+    if (window.MkenWhatsappAutomation) {
+      window.MkenWhatsappAutomation.sendOrderConfirmation(updatedOrder, config)
+        .catch(function (err) {
+          console.error('Failed to send auto order confirmation:', err);
+        });
+      window.MkenWhatsappAutomation.sendOwnerAlert(updatedOrder, 'order', config)
+        .catch(function (err) {
+          console.error('Failed to send owner alert:', err);
+        });
+    }
+
     var brandName = store.getBrand(config).name;
     var message = orderStore.buildCartWhatsAppMessage(brandName, updatedOrder);
     // Replace first header line with confirmation header
@@ -408,6 +419,13 @@
     orderStore.addPendingOrder(payload);
     orderStore.clearCart(activeActivityId);
     renderCartBar();
+
+    if (window.MkenWhatsappAutomation) {
+      window.MkenWhatsappAutomation.sendOwnerAlert(payload, 'order', config)
+        .catch(function (err) {
+          console.error('Failed to send owner alert:', err);
+        });
+    }
 
     window.open(getWhatsAppUrl(message), '_blank', 'noopener');
     showPanel('panelOrderSuccess');

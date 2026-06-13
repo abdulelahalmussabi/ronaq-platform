@@ -129,7 +129,87 @@ jobs:
 
 ---
 
-## 4. الفحص الأمني بعد النشر (Post-Deployment Audit)
+## 4. استضافة n8n للإنتاج (WhatsApp SaaS Automation)
+
+لتشغيل سير عمل واتساب مركزي يخدم **جميع المستأجرين** ديناميكياً (بدون متغيرات بيئة ثابتة لكل عميل)، استضِف n8n على VPS.
+
+### أ) تشغيل n8n عبر Docker Compose
+
+1. على VPS (DigitalOcean / Hetzner / AWS)، انسخ مجلد `examples/n8n/` إلى السيرفر.
+2. انسخ `.env.example` إلى `.env` وعبّئ القيم:
+   ```env
+   POSTGRES_PASSWORD=secure_password_here
+   N8N_HOST=n8n.yourdomain.com
+   WEBHOOK_URL=https://n8n.yourdomain.com/
+   SUPABASE_URL=https://your-project.supabase.co
+   SUPABASE_SERVICE_ROLE_KEY=your_service_role_key
+   ```
+3. شغّل الحاويات:
+   ```bash
+   cd /path/to/examples/n8n
+   docker compose up -d
+   ```
+4. راقب السجلات: `docker compose logs -f n8n`
+
+### ب) Reverse Proxy و SSL (Nginx + Let's Encrypt)
+
+1. انسخ `examples/n8n/nginx-n8n.conf.example` إلى `/etc/nginx/sites-available/n8n`.
+2. عدّل `server_name` ليطابق نطاقك.
+3. فعّل الموقع: `sudo ln -s /etc/nginx/sites-available/n8n /etc/nginx/sites-enabled/`
+4. احصل على شهادة SSL:
+   ```bash
+   sudo certbot --nginx -d n8n.yourdomain.com
+   sudo nginx -t && sudo systemctl reload nginx
+   ```
+
+> n8n يستمع على `127.0.0.1:5678` فقط — لا تفتح المنفذ مباشرة للإنترنت.
+
+### ج) استيراد سير العمل SaaS
+
+1. افتح `https://n8n.yourdomain.com` وسجّل الدخول.
+2. **Workflows → Import from File** → `mken-whatsapp-saas.workflow.json`
+3. تأكد أن متغيرات `SUPABASE_URL` و `SUPABASE_SERVICE_ROLE_KEY` موجودة في `.env` (تُمرَّر تلقائياً عبر Docker Compose).
+4. فعّل الـ Workflow (**Active = ON**).
+
+**مسار الـ Webhook لكل عميل:**
+```
+https://n8n.yourdomain.com/webhook/mken-whatsapp?tenant=CLIENT-SLUG
+```
+
+### د) تهيئة العملاء من لوحة الإدارة
+
+كل عميل (Tenant) في `/admin.html` → **الربط والأتمتة → إعدادات واتساب**:
+
+| الحقل | القيمة |
+|-------|--------|
+| بوابة الإرسال | Custom Webhook |
+| API URL | `https://n8n.yourdomain.com/webhook/mken-whatsapp?tenant=slug-العميل` |
+| Token | مفتاح Bearer لحماية المسار |
+| بوابة الإرسال الفعلية | UltraMsg أو Twilio + بيانات الحساب |
+
+يحفظ n8n بيانات البوابة الفعلية في `config_data.whatsappApi.gateway` ويقرأها من Supabase عند كل طلب.
+
+### هـ) سير العمل داخل n8n (SaaS)
+
+```
+Webhook (?tenant=slug)
+  → Fetch Tenant Settings (Supabase REST)
+  → Validate And Extract (Token + gateway credentials)
+  → Route Provider (ultramsg / twilio)
+  → Send → Respond 200
+```
+
+**ملفات سير العمل:**
+
+| الملف | الاستخدام |
+|-------|-----------|
+| `mken-whatsapp-saas.workflow.json` | **إنتاج SaaS** — متعدد المستأجرين |
+| `mken-whatsapp-test.workflow.json` | اختبار الربط فقط (بدون إرسال) |
+| `mken-whatsapp-ultramsg.workflow.json` | Legacy — عميل واحد بمتغيرات بيئة ثابتة |
+
+---
+
+## 5. الفحص الأمني بعد النشر (Post-Deployment Audit)
 
 * افتح متصفحك في وضع التصفح المخفي وحاول الدخول لصفحة الإدارة لعميل آخر.
 * تأكد من أن أي محاولة لقراءة أو تحديث جدول المواعيد أو إعدادات المستأجرين بدون تسجيل الدخول بحساب المالك الصحيح تفشل كلياً وتُرجع خطأ `401 Unauthorized` بفضل سياسات RLS المفعّلة.

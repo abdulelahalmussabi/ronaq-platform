@@ -277,6 +277,176 @@ async function logWhatsappMessageServer(supabase, logObj, tenantSlug) {
   }
 }
 
+function parseTemplate(templateText, data) {
+  if (!templateText) return '';
+  return templateText
+    .replace(/{brandName}/g, data.brandName || '')
+    .replace(/{customerName}/g, data.customerName || '')
+    .replace(/{phone}/g, data.phone || '')
+    .replace(/{serviceTitle}/g, data.serviceTitle || '')
+    .replace(/{activityTitle}/g, data.activityTitle || '')
+    .replace(/{date}/g, data.date || '')
+    .replace(/{time}/g, data.time || '')
+    .replace(/{appointmentId}/g, data.appointmentId || '')
+    .replace(/{orderId}/g, data.orderId || '')
+    .replace(/{orderItems}/g, data.orderItems || '')
+    .replace(/{hoursBefore}/g, data.hoursBefore || '')
+    .replace(/{reminderLeadText}/g, data.reminderLeadText || '');
+}
+
+async function sendRawServerWhatsApp(phone, messageText, imageUrl, wa, supabase, tenantSlug = 'default', useMetaTemplateComponents = false, rawTemplateText = '') {
+  const provider = wa.provider;
+  let promise;
+
+  if (provider === 'ultramsg' && wa.instanceId) {
+    const useImage = !!imageUrl;
+    const url = `https://api.ultramsg.com/${wa.instanceId}/messages/${useImage ? 'image' : 'chat'}`;
+    const params = new URLSearchParams();
+    params.append('token', wa.token);
+    params.append('to', phone);
+    if (useImage) {
+      params.append('image', imageUrl);
+      params.append('caption', messageText);
+    } else {
+      params.append('body', messageText);
+    }
+
+    promise = fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: params.toString()
+    }).then(r => r.ok ? r.json() : Promise.reject(new Error(`UltraMsg status ${r.status}`)));
+  } else if (provider === 'twilio' && wa.accountSid && wa.fromNumber) {
+    const url = `https://api.twilio.com/2010-04-01/Accounts/${wa.accountSid}/Messages.json`;
+    const params = new URLSearchParams();
+    params.append('Body', messageText);
+    params.append('From', 'whatsapp:' + wa.fromNumber.replace(/^\+?/, '+'));
+    params.append('To', 'whatsapp:+' + phone);
+    if (imageUrl) {
+      params.append('MediaUrl', imageUrl);
+    }
+
+    promise = fetch(url, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded',
+        'Authorization': 'Basic ' + Buffer.from(wa.accountSid + ':' + wa.token).toString('base64')
+      },
+      body: params.toString()
+    }).then(r => r.ok ? r.json() : Promise.reject(new Error(`Twilio status ${r.status}`)));
+  } else if (provider === 'custom' && wa.url) {
+    const headers = { 'Content-Type': 'application/json' };
+    if (wa.token) headers['Authorization'] = 'Bearer ' + wa.token;
+
+    const payload = {
+      to: phone,
+      body: messageText,
+      event: 'server_notification'
+    };
+    if (imageUrl) payload.imageUrl = imageUrl;
+
+    promise = fetch(wa.url, {
+      method: 'POST',
+      headers: headers,
+      body: JSON.stringify(payload)
+    }).then(r => r.ok ? r.text() : Promise.reject(new Error(`Custom Webhook status ${r.status}`)));
+  } else if (provider === 'whatsapp_business' && wa.phoneNumberId) {
+    const url = `https://graph.facebook.com/v18.0/${wa.phoneNumberId}/messages`;
+    const headers = {
+      'Authorization': 'Bearer ' + wa.token,
+      'Content-Type': 'application/json'
+    };
+
+    let payload;
+    if (imageUrl) {
+      payload = {
+        messaging_product: "whatsapp",
+        recipient_type: "individual",
+        to: phone,
+        type: "image",
+        image: {
+          link: imageUrl,
+          caption: messageText
+        }
+      };
+    } else if (wa.templateName) {
+      let parameters = [];
+      if (useMetaTemplateComponents && rawTemplateText) {
+        const paramVals = extractTemplateParameters(rawTemplateText, messageText);
+        parameters = paramVals.map(val => ({
+          type: "text",
+          text: val
+        }));
+      } else {
+        parameters = [
+          {
+            type: "text",
+            text: messageText
+          }
+        ];
+      }
+
+      payload = {
+        messaging_product: "whatsapp",
+        recipient_type: "individual",
+        to: phone,
+        type: "template",
+        template: {
+          name: wa.templateName,
+          language: {
+            code: wa.languageCode || "ar"
+          },
+          components: [
+            {
+              type: "body",
+              parameters: parameters
+            }
+          ]
+        }
+      };
+    } else {
+      payload = {
+        messaging_product: "whatsapp",
+        recipient_type: "individual",
+        to: phone,
+        type: "text",
+        text: {
+          body: messageText
+        }
+      };
+    }
+
+    promise = fetch(url, {
+      method: 'POST',
+      headers: headers,
+      body: JSON.stringify(payload)
+    }).then(async r => {
+      if (r.ok) return r.json();
+      let errorMsg = `WhatsApp Business status ${r.status}`;
+      try {
+        const errData = await r.json();
+        if (errData && errData.error && errData.error.message) {
+          errorMsg = errData.error.message;
+        }
+      } catch (e) {}
+      throw new Error(errorMsg);
+    });
+  } else {
+    throw new Error(`Unsupported provider: ${provider}`);
+  }
+
+  const result = await promise;
+  await logWhatsappMessageServer(supabase, {
+    phone,
+    body: messageText,
+
+    provider,
+    status: 'success',
+    eventType: 'server_notification'
+  }, tenantSlug);
+  return result;
+}
+
 async function sendServerWhatsApp(item, type, config, supabase, tenantSlug = 'default') {
   const wa = config.whatsappApi || {};
   if (!wa.enabled) return;
@@ -285,10 +455,10 @@ async function sendServerWhatsApp(item, type, config, supabase, tenantSlug = 'de
   if (!phone) return;
 
   const brandName = (config.brand && config.brand.name) || 'مكِّن';
-  let body = '';
+  let messageText = '';
+  let imageUrl = null;
 
   if (type === 'booking') {
-    // Recreate Booking Confirmation message
     const services = config.services || {};
     const serviceOverride = services[item.service_id] || {};
     const serviceTitle = serviceOverride.title || item.service_id;
@@ -297,180 +467,127 @@ async function sendServerWhatsApp(item, type, config, supabase, tenantSlug = 'de
     const activityOverride = activities[item.activity_id] || {};
     const activityTitle = activityOverride.title || item.activity_id;
 
-    body = [
-      'تم تأكيد موعدك بنجاح — ' + brandName,
-      '━━━━━━━━━━━━━━',
-      'النشاط: ' + activityTitle,
-      'الخدمة: ' + serviceTitle,
-      'التاريخ: ' + formatDateArabic(item.date),
-      'الوقت: ' + formatTimeArabic(item.time),
-      'الاسم: ' + item.customer_name,
-      'الجوال: ' + item.phone
-    ];
-    if (item.district) body.push('الحي/المنطقة: ' + item.district);
-    if (item.party_size) body.push('عدد الأشخاص: ' + item.party_size);
-    if (item.nights) body.push('عدد الليالي: ' + item.nights);
-    if (item.location_address) body.push('العنوان: ' + item.location_address);
-    body.push('━━━━━━━━━━━━━━', 'تم سداد الحساب إلكترونياً بنجاح!', 'نتطلع لخدمتك!');
+    const customTemplate = wa.templates && wa.templates.confirmation;
+    if (customTemplate) {
+      messageText = parseTemplate(customTemplate, {
+        brandName,
+        customerName: item.customer_name,
+        phone: item.phone,
+        serviceTitle,
+        activityTitle,
+        date: formatDateArabic(item.date),
+        time: formatTimeArabic(item.time),
+        appointmentId: item.id
+      });
+    } else {
+      const body = [
+        'تم تأكيد موعدك بنجاح — ' + brandName,
+        '━━━━━━━━━━━━━━',
+        'النشاط: ' + activityTitle,
+        'الخدمة: ' + serviceTitle,
+        'التاريخ: ' + formatDateArabic(item.date),
+        'الوقت: ' + formatTimeArabic(item.time),
+        'الاسم: ' + item.customer_name,
+        'الجوال: ' + item.phone
+      ];
+      if (item.district) body.push('الحي/المنطقة: ' + item.district);
+      if (item.party_size) body.push('عدد الأشخاص: ' + item.party_size);
+      if (item.nights) body.push('عدد الليالي: ' + item.nights);
+      if (item.location_address) body.push('العنوان: ' + item.location_address);
+      body.push('━━━━━━━━━━━━━━', 'تم سداد الحساب إلكترونياً بنجاح!', 'نتطلع لخدمتك!');
+      messageText = body.join('\n');
+    }
+
+    if (wa.sendQrCode) {
+      imageUrl = 'https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=' + encodeURIComponent('BOOKING-' + item.id);
+    }
   } else {
-    // Recreate Order Confirmation message
     const itemsList = Array.isArray(item.items) ? item.items : JSON.parse(item.items || '[]');
-    body = [
-      'تم دفع وتأكيد طلب الشراء بنجاح 🎉 — ' + brandName,
-      '━━━━━━━━━━━━━━',
-      'المنتجات:'
-    ];
+    let orderItemsText = '';
     itemsList.forEach((line, i) => {
       let row = `${i + 1}. ${line.icon || '🛒'} ${line.serviceTitle} × ${line.quantity}`;
       if (line.priceLabel) row += ` (${line.priceLabel})`;
-      body.push(row);
+      orderItemsText += (orderItemsText ? '\n' : '') + row;
     });
-    body.push(
-      '━━━━━━━━━━━━━━',
-      'الاسم: ' + item.customer_name,
-      'الجوال: ' + item.phone
-    );
-    if (item.district) body.push('الحي: ' + item.district);
-    if (item.location_address) body.push('العنوان: ' + item.location_address);
-    body.push('━━━━━━━━━━━━━━', 'تم سداد الحساب إلكترونياً بنجاح! رقم العملية: ' + item.payment_id, 'شكراً لتعاملك معنا! سنقوم بالتوصيل قريباً.');
-  }
 
-  const messageText = body.join('\n');
-  const provider = wa.provider;
-  let promise;
-
-  try {
-    if (provider === 'ultramsg' && wa.instanceId) {
-      const url = `https://api.ultramsg.com/${wa.instanceId}/messages/chat`;
-      const params = new URLSearchParams();
-      params.append('token', wa.token);
-      params.append('to', phone);
-      params.append('body', messageText);
-
-      promise = fetch(url, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-        body: params.toString()
-      }).then(r => r.ok ? r.json() : Promise.reject(new Error(`UltraMsg status ${r.status}`)));
-    } else if (provider === 'twilio' && wa.accountSid && wa.fromNumber) {
-      const url = `https://api.twilio.com/2010-04-01/Accounts/${wa.accountSid}/Messages.json`;
-      const params = new URLSearchParams();
-      params.append('Body', messageText);
-      params.append('From', 'whatsapp:' + wa.fromNumber.replace(/^\+?/, '+'));
-      params.append('To', 'whatsapp:+' + phone);
-
-      promise = fetch(url, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/x-www-form-urlencoded',
-          'Authorization': 'Basic ' + Buffer.from(wa.accountSid + ':' + wa.token).toString('base64')
-        },
-        body: params.toString()
-      }).then(r => r.ok ? r.json() : Promise.reject(new Error(`Twilio status ${r.status}`)));
-    } else if (provider === 'custom' && wa.url) {
-      const headers = { 'Content-Type': 'application/json' };
-      if (wa.token) headers['Authorization'] = 'Bearer ' + wa.token;
-
-      const appointment = mapDbItemToAppointment(item, type);
-
-      promise = fetch(wa.url, {
-        method: 'POST',
-        headers: headers,
-        body: JSON.stringify({
-          to: phone,
-          body: messageText,
-          event: 'confirmation',
-          appointment: appointment,
-          item: item
-        })
-      }).then(r => r.ok ? r.text() : Promise.reject(new Error(`Custom Webhook status ${r.status}`)));
-    } else if (provider === 'whatsapp_business' && wa.phoneNumberId) {
-      const url = `https://graph.facebook.com/v18.0/${wa.phoneNumberId}/messages`;
-      const headers = {
-        'Authorization': 'Bearer ' + wa.token,
-        'Content-Type': 'application/json'
-      };
-
-      let payload;
-      if (wa.templateName) {
-        payload = {
-          messaging_product: "whatsapp",
-          recipient_type: "individual",
-          to: phone,
-          type: "template",
-          template: {
-            name: wa.templateName,
-            language: {
-              code: wa.languageCode || "ar"
-            },
-            components: [
-              {
-                type: "body",
-                parameters: [
-                  {
-                    type: "text",
-                    text: messageText
-                  }
-                ]
-              }
-            ]
-          }
-        };
-      } else {
-        payload = {
-          messaging_product: "whatsapp",
-          recipient_type: "individual",
-          to: phone,
-          type: "text",
-          text: {
-            body: messageText
-          }
-        };
-      }
-
-      promise = fetch(url, {
-        method: 'POST',
-        headers: headers,
-        body: JSON.stringify(payload)
-      }).then(async r => {
-        if (r.ok) return r.json();
-        let errorMsg = `WhatsApp Business status ${r.status}`;
-        try {
-          const errData = await r.json();
-          if (errData && errData.error && errData.error.message) {
-            errorMsg = errData.error.message;
-          }
-        } catch (e) {}
-        throw new Error(errorMsg);
+    const customTemplate = wa.templates && wa.templates.order_confirmation;
+    if (customTemplate) {
+      messageText = parseTemplate(customTemplate, {
+        brandName,
+        customerName: item.customer_name,
+        phone: item.phone,
+        orderId: item.id,
+        orderItems: orderItemsText
       });
     } else {
-      throw new Error(`Unsupported provider: ${provider}`);
+      const body = [
+        'تم دفع وتأكيد طلب الشراء بنجاح 🎉 — ' + brandName,
+        '━━━━━━━━━━━━━━',
+        'المنتجات:',
+        orderItemsText,
+        '━━━━━━━━━━━━━━',
+        'الاسم: ' + item.customer_name,
+        'الجوال: ' + item.phone
+      ];
+      if (item.district) body.push('الحي: ' + item.district);
+      if (item.location_address) body.push('العنوان: ' + item.location_address);
+      body.push('━━━━━━━━━━━━━━', 'تم سداد الحساب إلكترونياً بنجاح! رقم العملية: ' + item.payment_id, 'شكراً لتعاملك معنا! سنقوم بالتوصيل قريباً.');
+      messageText = body.join('\n');
     }
 
-    const result = await promise;
-    console.log(`Auto WhatsApp sent via ${provider} for ${item.id}`);
+    if (wa.sendQrCode) {
+      imageUrl = 'https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=' + encodeURIComponent('ORDER-' + item.id);
+    }
+  }
 
-    await logWhatsappMessageServer(supabase, {
-      phone,
-      body: messageText,
-      provider,
-      status: 'success',
-      eventType: 'confirmation',
-      appointmentId: type === 'booking' ? item.id : null
-    }, tenantSlug);
-
+  try {
+    const rawTemplateText = type === 'booking'
+      ? (wa.templates && wa.templates.confirmation) || ''
+      : (wa.templates && wa.templates.order_confirmation) || '';
+    await sendRawServerWhatsApp(phone, messageText, imageUrl, wa, supabase, tenantSlug, wa.useMetaTemplateComponents, rawTemplateText);
+    console.log(`Auto WhatsApp sent via ${wa.provider} for ${item.id}`);
   } catch (err) {
     console.error(`Failed to send auto WhatsApp in webhook for ${item.id}:`, err.message);
+  }
 
-    await logWhatsappMessageServer(supabase, {
-      phone,
-      body: messageText,
-      provider,
-      status: 'failed',
-      errorMessage: err.message,
-      eventType: 'confirmation',
-      appointmentId: type === 'booking' ? item.id : null
-    }, tenantSlug);
+  if (wa.sendOwnerAlert) {
+    try {
+      const ownerPhone = cleanPhone(wa.ownerAlertPhone || (config.brand && config.brand.phone) || config.phone);
+      if (ownerPhone) {
+        let alertText = '';
+        if (type === 'booking') {
+          const services = config.services || {};
+          const serviceOverride = services[item.service_id] || {};
+          const serviceTitle = serviceOverride.title || item.service_id;
+          alertText = [
+            '🔔 حجز جديد — ' + brandName,
+            '━━━━━━━━━━━━━━',
+            'تم تسجيل حجز موعد جديد ومؤكد:',
+            'العميل: ' + item.customer_name,
+            'الجوال: ' + item.phone,
+            'الخدمة: ' + serviceTitle,
+            'التاريخ: ' + formatDateArabic(item.date),
+            'الوقت: ' + formatTimeArabic(item.time),
+            '━━━━━━━━━━━━━━',
+            'يرجى مراجعة لوحة الإدارة.'
+          ].join('\n');
+        } else {
+          alertText = [
+            '🔔 طلب شراء جديد — ' + brandName,
+            '━━━━━━━━━━━━━━',
+            'تم تقديم طلب شراء جديد ومؤكد:',
+            'العميل: ' + item.customer_name,
+            'الجوال: ' + item.phone,
+            'القيمة: ' + (item.payment_amount || ''),
+            '━━━━━━━━━━━━━━',
+            'يرجى مراجعة لوحة الإدارة.'
+          ].join('\n');
+        }
+        await sendRawServerWhatsApp(ownerPhone, alertText, null, wa, supabase, tenantSlug);
+      }
+    } catch (e) {
+      console.error('Failed to send server-side owner alert:', e.message);
+    }
   }
 }
 
@@ -542,3 +659,47 @@ function formatTimeArabic(time) {
     return time;
   }
 }
+
+function escapeRegExp(string) {
+  return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
+function extractTemplateParameters(templateText, bodyText) {
+  if (!templateText) return [bodyText];
+
+  const placeholders = [];
+  const regex = /\{[a-zA-Z0-9_]+\}/g;
+  let match;
+  while ((match = regex.exec(templateText)) !== null) {
+    placeholders.push(match[0]);
+  }
+
+  if (placeholders.length === 0) {
+    return [bodyText];
+  }
+
+  let temp = templateText;
+  placeholders.forEach(ph => {
+    temp = temp.replace(ph, '__CAP_VAR__');
+  });
+
+  const escaped = escapeRegExp(temp);
+  const patternStr = '^' + escaped.replace(/__CAP_VAR__/g, '([\\s\\S]*?)') + '$';
+
+  try {
+    const pattern = new RegExp(patternStr);
+    const bodyMatch = bodyText.match(pattern);
+    if (bodyMatch) {
+      const params = [];
+      for (let i = 1; i < bodyMatch.length; i++) {
+        params.push(bodyMatch[i].trim());
+      }
+      return params;
+    }
+  } catch (e) {
+    console.warn('Failed to parse template regex matcher', e);
+  }
+
+  return [bodyText];
+}
+

@@ -380,6 +380,31 @@
             <input type="password" id="whatsappApiToken" class="admin-input" dir="ltr" placeholder="أدخل التوكن أو كلمة السر للربط">
           </div>
 
+          <div id="whatsappGatewayBlock" class="admin-field" hidden style="margin-top: 16px; padding: 14px; border: 1px dashed rgba(255,255,255,0.15); border-radius: 10px;">
+            <h4 style="margin: 0 0 8px;">بوابة الإرسال الفعلية (لـ n8n SaaS)</h4>
+            <p class="admin-hint" style="margin-bottom: 12px;">عند استخدام n8n مركزي، يقرأ n8n هذه البيانات من Supabase ويرسل نيابةً عنك عبر البوابة التي تختارها.</p>
+            <div class="admin-field">
+              <label for="whatsappGatewayProvider">بوابة الإرسال</label>
+              <select id="whatsappGatewayProvider" class="admin-input">
+                <option value="">— اختر البوابة —</option>
+                <option value="ultramsg">UltraMsg</option>
+                <option value="twilio">Twilio</option>
+              </select>
+            </div>
+            <div class="admin-field">
+              <label for="whatsappGatewayInstanceId">معرف النسخة / Account SID</label>
+              <input type="text" id="whatsappGatewayInstanceId" class="admin-input" dir="ltr" placeholder="instanceXXXX أو Twilio Account SID">
+            </div>
+            <div class="admin-field">
+              <label for="whatsappGatewayToken">توكن البوابة (API Token)</label>
+              <input type="password" id="whatsappGatewayToken" class="admin-input" dir="ltr" placeholder="توكن UltraMsg أو Twilio Auth Token">
+            </div>
+            <div id="whatsappGatewayFromBlock" class="admin-field" hidden>
+              <label for="whatsappGatewayFromNumber">رقم المرسل Twilio</label>
+              <input type="text" id="whatsappGatewayFromNumber" class="admin-input" dir="ltr" placeholder="+14155253486">
+            </div>
+          </div>
+
           <div id="whatsappFromBlock" class="admin-field" hidden>
             <label for="whatsappApiFromNumber">رقم المرسل لـ Twilio (Twilio Sender Number)</label>
             <input type="text" id="whatsappApiFromNumber" class="admin-input" dir="ltr" placeholder="+14155253486">
@@ -405,26 +430,21 @@
             </p>
 
             <div class="admin-field" style="margin-top: 16px; padding: 14px; border: 1px solid rgba(255,255,255,0.12); border-radius: 10px;">
-              <h4 style="margin: 0 0 10px;">إعداد n8n (موصى به)</h4>
+              <h4 style="margin: 0 0 10px;">إعداد n8n SaaS (موصى به للإنتاج)</h4>
               <ol class="admin-hint" style="margin: 0; padding-right: 18px; line-height: 1.8;">
-                <li>افتح n8n → <strong>Workflows</strong> → <strong>Import from File</strong></li>
-                <li>استورد أولاً: <code>examples/n8n/mken-whatsapp-test.workflow.json</code> للاختبار</li>
-                <li>في n8n عيّن متغير البيئة: <code>MKEN_WEBHOOK_TOKEN</code> (نفس التوكن أدناه)</li>
+                <li>على VPS: انسخ <code>examples/n8n/docker-compose.yml</code> وشغّل n8n (راجع <code>DEPLOYMENT.md</code>)</li>
+                <li>في n8n عيّن: <code>SUPABASE_URL</code> و <code>SUPABASE_SERVICE_ROLE_KEY</code></li>
+                <li>استورد: <code>examples/n8n/mken-whatsapp-saas.workflow.json</code></li>
                 <li>فعّل الـ Workflow (<strong>Active = ON</strong>)</li>
-                <li>من عقدة Webhook انسخ رابط الإنتاج:
-                  <code dir="ltr">https://YOUR-N8N-DOMAIN/webhook/mken-whatsapp-test</code>
+                <li>في حقل <strong>API URL</strong> أعلاه ضع الرابط مع معرّف نشاطك:
+                  <code dir="ltr">https://YOUR-N8N-DOMAIN/webhook/mken-whatsapp?tenant=<span id="n8nTenantSlugHint">YOUR-SLUG</span></code>
                 </li>
-                <li>الصق الرابط في حقل <strong>API URL</strong> أعلاه، ثم اضغط <strong>اختبار الإرسال التجريبي</strong></li>
-                <li>بعد نجاح الاختبار، استورد سير العمل الكامل:
-                  <code>examples/n8n/mken-whatsapp-ultramsg.workflow.json</code>
-                </li>
-                <li>أضف في n8n أيضاً: <code>ULTRAMSG_INSTANCE_ID</code> و <code>ULTRAMSG_TOKEN</code></li>
-                <li>استبدل الرابط بـ:
-                  <code dir="ltr">https://YOUR-N8N-DOMAIN/webhook/mken-whatsapp</code>
-                </li>
+                <li>في <strong>Token</strong> أدخل مفتاح حماية الـ Webhook (Bearer)</li>
+                <li>في <strong>بوابة الإرسال الفعلية</strong> أدناه اختر UltraMsg أو Twilio وأدخل بيانات حسابك</li>
+                <li>للاختبار أولاً: استورد <code>examples/n8n/mken-whatsapp-test.workflow.json</code></li>
               </ol>
               <p class="admin-hint" style="margin-top: 10px;">
-                <strong>ملاحظة:</strong> رابط <code>webhook-test</code> يعمل فقط أثناء فتح المحرر. للإنتاج استخدم رابط <code>webhook</code> بعد تفعيل السير.
+                <strong>ملاحظة:</strong> سير العمل القديم <code>mken-whatsapp-ultramsg.workflow.json</code> للاستخدام الفردي فقط (متغيرات بيئة ثابتة). للـ SaaS استخدم <code>mken-whatsapp-saas.workflow.json</code>.
               </p>
             </div>
 
@@ -454,6 +474,87 @@
               <span>أرسل رسائل تذكير تلقائية مستحقة في الخلفية</span>
             </label>
           </div>
+
+          <div class="admin-field">
+            <label class="admin-check">
+              <input type="checkbox" id="whatsappSendOrderConfirmation" checked>
+              <span>أرسل رسالة تأكيد للطلب تلقائياً فور تأكيده أو دفعه</span>
+            </label>
+          </div>
+
+          <div class="admin-field">
+            <label class="admin-check">
+              <input type="checkbox" id="whatsappSendQrCode">
+              <span>إرسال رمز QR كصورة مع رسائل تأكيد الحجوزات والطلبات</span>
+            </label>
+          </div>
+
+          <div class="admin-field">
+            <label class="admin-check">
+              <input type="checkbox" id="whatsappSendOwnerAlert">
+              <span>إرسال إشعار للمالك بالعمليات الجديدة (حجز جديد / طلب جديد)</span>
+            </label>
+          </div>
+
+          <div class="admin-field" id="whatsappOwnerPhoneBlock" style="margin-top: 10px;" hidden>
+            <label for="whatsappOwnerAlertPhone">رقم جوال المالك للتنبيهات (مع رمز الدولة، مثال: 9665xxxxxxxx)</label>
+            <input type="text" id="whatsappOwnerAlertPhone" class="admin-input" dir="ltr" placeholder="9665xxxxxxxx">
+          </div>
+
+          <div class="admin-field" style="margin-top: 15px;">
+            <label class="admin-check">
+              <input type="checkbox" id="whatsappUseMetaTemplateComponents">
+              <span>استخدام قوالب Meta المعتمدة ذات المتغيرات المتسلسلة لـ Twilio / Business API</span>
+            </label>
+            <p class="admin-hint" style="margin-top:4px;">عند التفعيل، سيتم إرسال المتغيرات كمعاملات منفصلة ({{1}}، {{2}}، إلخ) بدلاً من النص الكامل المتصل لتلائم قوالب Meta المعتمدة.</p>
+          </div>
+
+          <details class="admin-details" style="margin-top: 15px; border: 1px solid var(--border-color); border-radius: 8px; padding: 10px; background: rgba(255, 255, 255, 0.02);">
+            <summary style="font-weight: bold; cursor: pointer; color: var(--primary-color); padding: 5px 0; outline: none; list-style: none;">⚙️ تخصيص قوالب رسائل الواتساب</summary>
+            <div style="margin-top: 15px; display: flex; flex-direction: column; gap: 15px;">
+              
+              <div class="admin-field">
+                <label for="whatsappTemplateConfirmation">قالب تأكيد الحجز</label>
+                <textarea id="whatsappTemplateConfirmation" class="admin-input" rows="4" placeholder="مثال: تم تأكيد موعدك بنجاح لـ {serviceTitle} يوم {date} الساعه {time} - {brandName}"></textarea>
+              </div>
+
+              <div class="admin-field">
+                <label for="whatsappTemplateReminder">قالب تذكير الحجز</label>
+                <textarea id="whatsappTemplateReminder" class="admin-input" rows="4" placeholder="مثال: نذكرك بموعدك {reminderLeadText} لـ {serviceTitle} يوم {date} الساعة {time} - {brandName}"></textarea>
+              </div>
+
+              <div class="admin-field">
+                <label for="whatsappTemplateCancellation">قالب إلغاء الحجز</label>
+                <textarea id="whatsappTemplateCancellation" class="admin-input" rows="4" placeholder="مثال: تم إلغاء موعدك لـ {serviceTitle} يوم {date} الساعة {time} - {brandName}"></textarea>
+              </div>
+
+              <div class="admin-field">
+                <label for="whatsappTemplateReschedule">قالب تعديل الحجز (التأجيل)</label>
+                <textarea id="whatsappTemplateReschedule" class="admin-input" rows="4" placeholder="مثال: تم تعديل موعدك لـ {serviceTitle} ليصبح يوم {date} الساعة {time} - {brandName}"></textarea>
+              </div>
+
+              <div class="admin-field">
+                <label for="whatsappTemplateOrderConfirmation">قالب تأكيد طلب الشراء</label>
+                <textarea id="whatsappTemplateOrderConfirmation" class="admin-input" rows="4" placeholder="مثال: تم تأكيد طلبك بنجاح! المنتجات: {orderItems} - المجموع للعميل {customerName} - {brandName}"></textarea>
+              </div>
+
+              <div class="admin-hint" style="background: rgba(0, 0, 0, 0.2); padding: 10px; border-radius: 6px; font-size: 12px; color: #bbb; line-height: 1.6;">
+                <strong>المتغيرات المدعومة:</strong><br>
+                <code>{brandName}</code>: اسم المنشأة | 
+                <code>{customerName}</code>: اسم العميل | 
+                <code>{phone}</code>: جوال العميل<br>
+                <code>{serviceTitle}</code>: الخدمة | 
+                <code>{activityTitle}</code>: النشاط/المتجر | 
+                <code>{date}</code>: التاريخ | 
+                <code>{time}</code>: الوقت<br>
+                <code>{appointmentId}</code> / <code>{orderId}</code>: معرف الحجز/الطلب | 
+                <code>{orderItems}</code>: منتجات الطلب | 
+                <code>{hoursBefore}</code>: الساعات قبل الموعد<br>
+                <code>{reminderLeadText}</code>: مدة التذكير (مثال: غداً)
+              </div>
+
+            </div>
+          </details>
 
           <div class="admin-backup" style="margin-top: 20px;">
             <button type="button" id="whatsappTestBtn" class="btn btn--outline" style="flex:1">اختبار الإرسال التجريبي</button>
@@ -711,58 +812,139 @@ ALTER TABLE mken_appointments ADD COLUMN IF NOT EXISTS payment_amount NUMERIC;</
       <div class="admin-tab-panel" data-panel="whatsapp-logs" hidden>
         <div class="admin-section">
           <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px; flex-wrap:wrap; gap:10px;">
-            <h3 style="margin:0;">سجل إرسال رسائل واتساب</h3>
+            <h3 style="margin:0;">بوابة وتطبيقات WhatsApp المتقدمة</h3>
             <div style="display:flex; gap:10px;">
-              <button type="button" id="refreshWhatsappLogsBtn" class="btn btn--outline btn--sm">🔄 تحديث السجل</button>
+              <button type="button" id="refreshWhatsappLogsBtn" class="btn btn--outline btn--sm">🔄 تحديث البيانات</button>
               <button type="button" id="clearWhatsappLogsBtn" class="btn btn--outline btn--sm" style="color:#c0392b; border-color:#c0392b15;">🗑️ تنظيف السجل</button>
             </div>
           </div>
-          
-          <div class="admin-grid" style="grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-bottom: 20px;">
-            <div style="background:#f4f6f8; padding:15px; border-radius:8px; text-align:center; border:1px solid var(--color-border);">
-              <div style="font-size:0.85rem; color:var(--color-text-muted);">إجمالي الرسائل</div>
-              <div id="waStatTotal" style="font-size:1.8rem; font-weight:bold; color:var(--color-primary); margin-top:5px;">0</div>
+
+          <!-- Sub Tab Navigation -->
+          <div style="display: flex; gap: 10px; margin-bottom: 20px; border-bottom: 1px solid var(--color-border); padding-bottom: 10px; flex-wrap: wrap;">
+            <button type="button" class="btn btn--sm wa-sub-tab btn--primary" data-sub-tab="logs-reports" style="border-radius: 20px; padding: 6px 16px;">📈 السجل والتقارير</button>
+            <button type="button" class="btn btn--sm wa-sub-tab btn--outline" data-sub-tab="crm-chats" style="border-radius: 20px; padding: 6px 16px;">💬 محادثات العملاء (CRM)</button>
+            <button type="button" class="btn btn--sm wa-sub-tab btn--outline" data-sub-tab="marketing" style="border-radius: 20px; padding: 6px 16px;">📢 الحملات التسويقية</button>
+          </div>
+
+          <!-- Sub Panel 1: Logs and Reports -->
+          <div id="waSubPanelLogsReports" class="wa-sub-panel">
+            <div class="admin-grid" style="grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-bottom: 20px;">
+              <div style="background:#f4f6f8; padding:15px; border-radius:8px; text-align:center; border:1px solid var(--color-border);">
+                <div style="font-size:0.85rem; color:var(--color-text-muted);">إجمالي المرسل</div>
+                <div id="waStatTotal" style="font-size:1.8rem; font-weight:bold; color:var(--color-primary); margin-top:5px;">0</div>
+              </div>
+              <div style="background:#e8f5e9; padding:15px; border-radius:8px; text-align:center; border:1px solid #c8e6c9;">
+                <div style="font-size:0.85rem; color:#2e7d32;">أُرسلت بنجاح</div>
+                <div id="waStatSuccess" style="font-size:1.8rem; font-weight:bold; color:#2e7d32; margin-top:5px;">0</div>
+              </div>
+              <div style="background:#fce4ec; padding:15px; border-radius:8px; text-align:center; border:1px solid #f8bbd0;">
+                <div style="font-size:0.85rem; color:#c62828;">فشلت</div>
+                <div id="waStatFailed" style="font-size:1.8rem; font-weight:bold; color:#c62828; margin-top:5px;">0</div>
+              </div>
+              <div style="background:#e3f2fd; padding:15px; border-radius:8px; text-align:center; border:1px solid #bbdefb;">
+                <div style="font-size:0.85rem; color:#0d47a1;">الرسائل الواردة (CRM)</div>
+                <div id="waStatReceived" style="font-size:1.8rem; font-weight:bold; color:#0d47a1; margin-top:5px;">0</div>
+              </div>
             </div>
-            <div style="background:#e8f5e9; padding:15px; border-radius:8px; text-align:center; border:1px solid #c8e6c9;">
-              <div style="font-size:0.85rem; color:#2e7d32;">أُرسلت بنجاح</div>
-              <div id="waStatSuccess" style="font-size:1.8rem; font-weight:bold; color:#2e7d32; margin-top:5px;">0</div>
+
+            <div style="display:flex; gap:10px; margin-bottom:15px; flex-wrap:wrap;">
+              <input type="text" id="waLogsSearchPhone" class="admin-input" placeholder="ابحث برقم الجوال..." style="max-width:250px; margin: 0;">
+              <select id="waLogsFilterStatus" class="admin-input" style="max-width:150px; margin: 0;">
+                <option value="all">كل الحالات</option>
+                <option value="success">ناجحة</option>
+                <option value="failed">فشلت</option>
+                <option value="received">الواردة</option>
+              </select>
             </div>
-            <div style="background:#fce4ec; padding:15px; border-radius:8px; text-align:center; border:1px solid #f8bbd0;">
-              <div style="font-size:0.85rem; color:#c62828;">فشلت</div>
-              <div id="waStatFailed" style="font-size:1.8rem; font-weight:bold; color:#c62828; margin-top:5px;">0</div>
+
+            <div style="overflow-x:auto;">
+              <table class="admin-table" style="width:100%; border-collapse:collapse; text-align:right;">
+                <thead>
+                  <tr style="background:#faf8f5; border-bottom:2px solid var(--color-border);">
+                    <th style="padding:10px;">التاريخ والوقت</th>
+                    <th style="padding:10px;">رقم الجوال</th>
+                    <th style="padding:10px;">الحدث</th>
+                    <th style="padding:10px;">البوابة</th>
+                    <th style="padding:10px;">الرسالة</th>
+                    <th style="padding:10px;">الحالة</th>
+                    <th style="padding:10px;">المحاولات</th>
+                    <th style="padding:10px;">الإجراءات</th>
+                  </tr>
+                </thead>
+                <tbody id="whatsappLogsTableBody">
+                  <tr>
+                    <td colspan="8" style="padding:20px; text-align:center; color:var(--color-text-muted);">جاري تحميل السجلات...</td>
+                  </tr>
+                </tbody>
+              </table>
             </div>
           </div>
 
-          <div style="display:flex; gap:10px; margin-bottom:15px; flex-wrap:wrap;">
-            <input type="text" id="waLogsSearchPhone" class="admin-input" placeholder="ابحث برقم الجوال..." style="max-width:250px;">
-            <select id="waLogsFilterStatus" class="admin-input" style="max-width:150px;">
-              <option value="all">كل الحالات</option>
-              <option value="success">ناجحة</option>
-              <option value="failed">فشلت</option>
-            </select>
+          <!-- Sub Panel 2: CRM Chats Portal -->
+          <div id="waSubPanelCrmChats" class="wa-sub-panel" hidden>
+            <div class="admin-grid" style="grid-template-columns: 280px 1fr; gap: 15px; height: 500px; background: #faf8f5; border: 1px solid var(--color-border); border-radius: 8px; overflow: hidden; margin-top: 10px;">
+              <!-- Left Sidebar: Active Contacts -->
+              <div style="border-left: 1px solid var(--color-border); display: flex; flex-direction: column; height: 100%; background: #ffffff;">
+                <div style="padding: 10px; border-bottom: 1px solid var(--color-border); background: #faf8f5;">
+                  <input type="text" id="waCrmSearchPhoneInput" class="admin-input btn--sm" placeholder="ابحث برقم الجوال..." style="width: 100%; margin: 0;">
+                </div>
+                <div id="waCrmContactsList" style="flex: 1; overflow-y: auto; display: flex; flex-direction: column;">
+                  <div style="padding: 20px; text-align: center; color: var(--color-text-muted); font-size: 0.85rem;">لا توجد محادثات نشطة</div>
+                </div>
+              </div>
+              <!-- Right Content: Chat Area -->
+              <div style="display: flex; flex-direction: column; height: 100%; background: #ffffff;">
+                <div id="waCrmChatHeader" style="padding: 12px 20px; border-bottom: 1px solid var(--color-border); background: #faf8f5; font-weight: bold; color: var(--color-primary); font-size: 0.95rem;">
+                  اختر عميلاً من القائمة لبدء استعراض المحادثة والرد
+                </div>
+                <div id="waCrmChatMessages" style="flex: 1; padding: 20px; overflow-y: auto; display: flex; flex-direction: column; gap: 12px; background: #fdfdfd; min-height: 250px;">
+                  <div style="margin: auto; color: var(--color-text-muted); text-align: center; font-size: 0.9rem;">💬 استعرض رسائل العملاء الواردة وأرسل ردوداً مباشرة.</div>
+                </div>
+                <!-- Chat Input Area -->
+                <div id="waCrmChatInputContainer" style="padding: 12px 20px; border-top: 1px solid var(--color-border); background: #faf8f5; display: flex; gap: 10px; align-items: center;" hidden>
+                  <input type="text" id="waCrmReplyMessage" class="admin-input" placeholder="اكتب رسالتك هنا..." style="flex: 1; margin: 0;">
+                  <button type="button" id="waCrmSendReplyBtn" class="btn btn--primary" style="padding: 8px 20px;">إرسال 🚀</button>
+                </div>
+              </div>
+            </div>
           </div>
 
-          <div style="overflow-x:auto;">
-            <table class="admin-table" style="width:100%; border-collapse:collapse; text-align:right;">
-              <thead>
-                <tr style="background:#faf8f5; border-bottom:2px solid var(--color-border);">
-                  <th style="padding:10px;">التاريخ والوقت</th>
-                  <th style="padding:10px;">رقم الجوال</th>
-                  <th style="padding:10px;">الحدث</th>
-                  <th style="padding:10px;">البوابة</th>
-                  <th style="padding:10px;">الرسالة</th>
-                  <th style="padding:10px;">الحالة</th>
-                  <th style="padding:10px;">المحاولات</th>
-                  <th style="padding:10px;">الإجراءات</th>
-                </tr>
-              </thead>
-              <tbody id="whatsappLogsTableBody">
-                <tr>
-                  <td colspan="8" style="padding:20px; text-align:center; color:var(--color-text-muted);">جاري تحميل السجلات...</td>
-                </tr>
-              </tbody>
-            </table>
+          <!-- Sub Panel 3: Marketing Campaigns -->
+          <div id="waSubPanelMarketing" class="wa-sub-panel" hidden>
+            <div style="max-width: 600px; margin: 0 auto; display: flex; flex-direction: column; gap: 15px; padding: 10px;">
+              <h4 style="margin: 0; font-size: 1.1rem; color: var(--color-primary);">📢 إطلاق حملة تسويقية جماعية للعملاء</h4>
+              <p class="admin-hint" style="margin: 0;">أرسل رسالة جماعية مخصصة إلى قائمة عملائك المسجلين. يرجى توخي الحذر وتجنب إرسال رسائل متكررة لتفادي حظر الرقم.</p>
+              
+              <div class="admin-field">
+                <label for="waCampTarget">الفئة المستهدفة</label>
+                <select id="waCampTarget" class="admin-input">
+                  <option value="all">كل العملاء (الحجوزات والطلب)</option>
+                  <option value="booking">عملاء الحجوزات فقط</option>
+                  <option value="order">عملاء طلبات الشراء فقط</option>
+                </select>
+              </div>
+
+              <div class="admin-field">
+                <label for="waCampMessage">نص الرسالة الجماعية</label>
+                <textarea id="waCampMessage" class="admin-input" rows="6" placeholder="مرحباً {customerName}، يسعدنا إعلامك بوجود عروض مميزة وحصرية لدينا في {brandName}..."></textarea>
+                <p class="admin-hint" style="margin-top: 4px;">المتغيرات المدعومة للاستبدال التلقائي: <code>{customerName}</code>, <code>{brandName}</code></p>
+              </div>
+
+              <!-- Campaign Progress -->
+              <div id="waCampProgressBlock" style="margin-top: 10px; padding: 12px; border: 1px solid var(--color-border); border-radius: 6px; background: #faf8f5;" hidden>
+                <div style="display: flex; justify-content: space-between; margin-bottom: 8px; font-weight: bold; font-size: 0.85rem;">
+                  <span id="waCampStatusLabel" style="color:var(--color-primary);">جاري إرسال الحملة التسويقية...</span>
+                  <span id="waCampProgressText">0 / 0</span>
+                </div>
+                <div style="background: #e0e0e0; border-radius: 4px; height: 10px; overflow: hidden; width: 100%;">
+                  <div id="waCampProgressBar" style="background: var(--color-primary); height: 100%; width: 0%; transition: width 0.2s;"></div>
+                </div>
+              </div>
+
+              <button type="button" id="waCampLaunchBtn" class="btn btn--primary" style="margin-top: 10px; width: 100%;">🚀 إطلاق الحملة الآن</button>
+            </div>
           </div>
+
         </div>
       </div>
 

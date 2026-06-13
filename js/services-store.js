@@ -582,12 +582,37 @@
       .then(function (s) { return pickConfig(s, localCfg); })
       .catch(function () { return localCfg || normalizeConfig(null); })
       .then(function (cfg) {
+        if (!(cfg.supabase && cfg.supabase.url && cfg.supabase.key)) {
+          return fetch('/api/v1/auth/supabase-config')
+            .then(function (res) {
+              if (!res.ok) throw new Error('Failed to fetch config');
+              return res.json();
+            })
+            .then(function (sbEnv) {
+              if (sbEnv && sbEnv.enabled && sbEnv.supabaseUrl && sbEnv.supabaseKey) {
+                if (!cfg.supabase) cfg.supabase = {};
+                cfg.supabase.url = sbEnv.supabaseUrl;
+                cfg.supabase.key = sbEnv.supabaseKey;
+                cfg.supabase.enabled = true;
+              }
+              return cfg;
+            })
+            .catch(function () {
+              return cfg;
+            });
+        }
+        return cfg;
+      })
+      .then(function (cfg) {
         var dbEnabled = (cfg.supabase && cfg.supabase.enabled) || _currentTenantSlug;
         var dbUrl = cfg.supabase && cfg.supabase.url;
         var dbKey = cfg.supabase && cfg.supabase.key;
 
-        if (dbEnabled && dbUrl && dbKey && window.MkenSupabaseDb) {
+        if (dbUrl && dbKey && window.MkenSupabaseDb) {
           window.MkenSupabaseDb.reinit(dbUrl, dbKey, true);
+        }
+
+        if (dbEnabled && dbUrl && dbKey && window.MkenSupabaseDb) {
           return window.MkenSupabaseDb.fetchConfig(_currentTenantSlug)
             .then(function (dbCfg) {
               if (dbCfg) {

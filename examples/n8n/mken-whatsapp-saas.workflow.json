@@ -1,0 +1,364 @@
+{
+  "name": "Mken WhatsApp — SaaS Multi-Tenant",
+  "nodes": [
+    {
+      "parameters": {
+        "content": "## إعداد SaaS (متعدد المستأجرين)\n\n**متغيرات البيئة في n8n (مرة واحدة):**\n- `SUPABASE_URL`\n- `SUPABASE_SERVICE_ROLE_KEY`\n\n**لكل عميل في لوحة مكِّن:**\n1. Custom Webhook → الرابط:\n   `https://YOUR-N8N/webhook/mken-whatsapp?tenant=SLUG`\n2. Token → مفتاح حماية الـ Webhook\n3. بوابة الإرسال الفعلية → UltraMsg / Twilio\n\n**لا حاجة** لـ `ULTRAMSG_INSTANCE_ID` أو `MKEN_WEBHOOK_TOKEN` على مستوى النظام.",
+        "height": 380,
+        "width": 440
+      },
+      "id": "note-saas-001",
+      "name": "SaaS Setup Notes",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [-240, 80]
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "mken-whatsapp",
+        "responseMode": "responseNode",
+        "options": {
+          "allowedOrigins": "*"
+        }
+      },
+      "id": "webhook-saas-001",
+      "name": "Mken Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [0, 300],
+      "webhookId": "mken-whatsapp-saas-hook"
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "={{ $env.SUPABASE_URL }}/rest/v1/mken_saas_clients",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "tenant_slug",
+              "value": "=eq.{{ $('Mken Webhook').item.json.query.tenant }}"
+            },
+            {
+              "name": "select",
+              "value": "tenant_slug,config_data"
+            }
+          ]
+        },
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "apikey",
+              "value": "={{ $env.SUPABASE_SERVICE_ROLE_KEY }}"
+            },
+            {
+              "name": "Authorization",
+              "value": "=Bearer {{ $env.SUPABASE_SERVICE_ROLE_KEY }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "fetch-tenant-001",
+      "name": "Fetch Tenant Settings",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [240, 300]
+    },
+    {
+      "parameters": {
+        "jsCode": "const webhook = $('Mken Webhook').first().json;\nconst tenantSlug = (webhook.query && webhook.query.tenant) ? String(webhook.query.tenant).trim() : '';\n\nif (!tenantSlug) {\n  return [{ json: { ok: false, error: 'Missing tenant query parameter', statusCode: 400 } }];\n}\n\nconst tenantRow = $input.first().json;\nif (!tenantRow || !tenantRow.config_data) {\n  return [{ json: { ok: false, error: 'Tenant not found: ' + tenantSlug, statusCode: 404 } }];\n}\n\nconst wa = tenantRow.config_data.whatsappApi || {};\nconst headers = webhook.headers || {};\nconst auth = String(headers.authorization || headers.Authorization || '').trim();\nconst expected = 'Bearer ' + String(wa.token || '').trim();\n\nif (!wa.token || auth !== expected) {\n  return [{ json: { ok: false, error: 'Unauthorized', statusCode: 401 } }];\n}\n\nconst payload = webhook.body && typeof webhook.body === 'object' ? webhook.body : webhook;\nconst to = payload.to;\nconst message = payload.body;\nconst event = payload.event || null;\nconst appointment = payload.appointment || null;\n\nif (!to || !message) {\n  return [{ json: { ok: false, error: 'Missing to or body', statusCode: 400 } }];\n}\n\nconst gw = wa.gateway || {};\nconst sendProvider = gw.provider || (wa.provider !== 'custom' ? wa.provider : null);\n\nif (!sendProvider || sendProvider === 'none' || sendProvider === 'custom') {\n  return [{ json: { ok: false, error: 'Gateway provider not configured for tenant', statusCode: 422 } }];\n}\n\nconst send = {\n  provider: sendProvider,\n  instanceId: gw.instanceId || wa.instanceId || '',\n  accountSid: gw.accountSid || wa.accountSid || '',\n  phoneNumberId: gw.phoneNumberId || wa.phoneNumberId || '',\n  token: gw.token || (wa.provider !== 'custom' ? wa.token : ''),\n  fromNumber: gw.fromNumber || wa.fromNumber || '',\n  templateName: gw.templateName || wa.templateName || '',\n  languageCode: gw.languageCode || wa.languageCode || 'ar'\n};\n\nif (sendProvider === 'ultramsg' && (!send.instanceId || !send.token)) {\n  return [{ json: { ok: false, error: 'UltraMsg credentials missing in tenant config', statusCode: 422 } }];\n}\nif (sendProvider === 'twilio' && (!send.accountSid || !send.token || !send.fromNumber)) {\n  return [{ json: { ok: false, error: 'Twilio credentials missing in tenant config', statusCode: 422 } }];\n}\n\nreturn [{ json: { ok: true, to, message, event, appointment, send, tenant: tenantSlug, statusCode: 200 } }];"
+      },
+      "id": "code-validate-saas-001",
+      "name": "Validate And Extract",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [480, 300]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "valid-saas-request",
+              "leftValue": "={{ $json.ok }}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "true"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "if-valid-saas-001",
+      "name": "Is Valid",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [720, 300]
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.send.provider }}",
+                    "rightValue": "ultramsg",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "ultramsg"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.send.provider }}",
+                    "rightValue": "twilio",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "twilio"
+            }
+          ]
+        },
+        "options": {
+          "fallbackOutput": "extra"
+        }
+      },
+      "id": "switch-provider-001",
+      "name": "Route Provider",
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.2,
+      "position": [960, 200]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://api.ultramsg.com/{{ $json.send.instanceId }}/messages/chat",
+        "sendBody": true,
+        "contentType": "form-urlencoded",
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "token",
+              "value": "={{ $json.send.token }}"
+            },
+            {
+              "name": "to",
+              "value": "={{ $json.to }}"
+            },
+            {
+              "name": "body",
+              "value": "={{ $json.message }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "http-ultramsg-saas-001",
+      "name": "Send UltraMsg",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1200, 80]
+    },
+    {
+      "parameters": {
+        "jsCode": "const item = $input.first().json;\nconst send = item.send;\nconst phone = String(item.to || '').replace(/\\D/g, '');\nconst auth = Buffer.from(send.accountSid + ':' + send.token).toString('base64');\n\nconst params = new URLSearchParams();\nparams.append('To', 'whatsapp:+' + phone);\nparams.append('From', 'whatsapp:' + String(send.fromNumber).replace(/^\\+?/, '+'));\nparams.append('Body', item.message);\n\nconst res = await fetch('https://api.twilio.com/2010-04-01/Accounts/' + send.accountSid + '/Messages.json', {\n  method: 'POST',\n  headers: {\n    'Content-Type': 'application/x-www-form-urlencoded',\n    'Authorization': 'Basic ' + auth\n  },\n  body: params.toString()\n});\n\nif (!res.ok) {\n  const text = await res.text();\n  throw new Error('Twilio failed: ' + res.status + ' ' + text.slice(0, 200));\n}\n\nreturn [{ json: { ok: true, provider: 'twilio', tenant: item.tenant, to: item.to, event: item.event } }];"
+      },
+      "id": "code-twilio-saas-001",
+      "name": "Send Twilio Dynamic",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1200, 220]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ { ok: true, sent: true, tenant: $('Validate And Extract').item.json.tenant, event: $('Validate And Extract').item.json.event, to: $('Validate And Extract').item.json.to } }}",
+        "options": {
+          "responseCode": 200
+        }
+      },
+      "id": "respond-ok-saas-001",
+      "name": "Respond 200",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [1440, 160]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ { ok: false, error: $json.error || 'Unsupported provider' } }}",
+        "options": {
+          "responseCode": "={{ $json.statusCode || 400 }}"
+        }
+      },
+      "id": "respond-error-saas-001",
+      "name": "Respond Error",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [960, 440]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ { ok: false, error: 'Unsupported gateway provider: ' + ($json.send && $json.send.provider) } }}",
+        "options": {
+          "responseCode": 422
+        }
+      },
+      "id": "respond-unsupported-001",
+      "name": "Respond Unsupported",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [1200, 360]
+    }
+  ],
+  "connections": {
+    "Mken Webhook": {
+      "main": [
+        [
+          {
+            "node": "Fetch Tenant Settings",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Fetch Tenant Settings": {
+      "main": [
+        [
+          {
+            "node": "Validate And Extract",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Validate And Extract": {
+      "main": [
+        [
+          {
+            "node": "Is Valid",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Is Valid": {
+      "main": [
+        [
+          {
+            "node": "Route Provider",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Respond Error",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Route Provider": {
+      "main": [
+        [
+          {
+            "node": "Send UltraMsg",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Send Twilio Dynamic",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Respond Unsupported",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send UltraMsg": {
+      "main": [
+        [
+          {
+            "node": "Respond 200",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send Twilio Dynamic": {
+      "main": [
+        [
+          {
+            "node": "Respond 200",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "pinData": {},
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "staticData": null,
+  "tags": [],
+  "meta": {
+    "templateCredsSetupCompleted": true
+  }
+}
