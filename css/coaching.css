@@ -1,0 +1,727 @@
+/* ==========================================================================
+   بوابة التدريب والأنشطة الرياضية — الهوية البصرية للاتحاد السعودي للهوكي
+   الألوان الرسمية:
+   - Bermuda (النعناعي/الأخضر الفاتح): #7ADCB4
+   - Thunder (الباذنجاني الداكن/الفحمي): #322931
+   - Silver (الفضي/الرمادي الفاتح): #BBBBBB
+   ========================================================================== */
+
+:root {
+  --hockey-primary: #7ADCB4;
+  --hockey-primary-hover: #5fcda3;
+  --hockey-primary-dark: #3fb88a;
+  --hockey-dark: #322931;
+  --hockey-dark-light: #483d47;
+  --hockey-dark-bg: #1c161c;
+  --hockey-silver: #BBBBBB;
+  --hockey-light-bg: #f9f9fb;
+  --hockey-card-shadow: 0 10px 30px rgba(50, 41, 49, 0.08);
+  --hockey-glow-shadow: 0 0 20px rgba(122, 220, 180, 0.25);
+  --font: 'IBM Plex Sans Arabic', system-ui, sans-serif;
+  --radius: 16px;
+  --transition: 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* تخصيص الصفحة الرئيسية للبوابة */
+.hockey-body {
+  font-family: var(--font);
+  background-color: var(--hockey-light-bg);
+  color: var(--hockey-dark);
+  margin: 0;
+  padding: 0;
+  line-height: 1.6;
+}
+
+/* تخصيص الهيدر وشعار الاتحاد السعودي للهوكي */
+.hockey-header {
+  background: var(--hockey-dark);
+  color: #fff;
+  border-bottom: 2px solid var(--hockey-primary);
+  padding: 15px 0;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  backdrop-filter: blur(10px);
+}
+
+.hockey-header__inner {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.hockey-logo {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.hockey-logo__symbol {
+  font-size: 2.2rem;
+  background: rgba(255, 255, 255, 0.1);
+  width: 50px;
+  height: 50px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  border: 2px solid var(--hockey-primary);
+  box-shadow: var(--hockey-glow-shadow);
+}
+
+.hockey-logo__text {
+  text-align: right;
+}
+
+.hockey-logo__title {
+  display: block;
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: #fff;
+  letter-spacing: 0.5px;
+}
+
+.hockey-logo__subtitle {
+  display: block;
+  font-size: 0.75rem;
+  color: var(--hockey-primary);
+  font-weight: 500;
+}
+
+/* هيرو البوابة */
+.hockey-hero {
+  background: linear-gradient(135deg, var(--hockey-dark) 0%, #1e181e 100%);
+  color: #fff;
+  padding: 70px 0 50px;
+  position: relative;
+  overflow: hidden;
+  text-align: center;
+  border-bottom: 5px solid var(--hockey-primary);
+}
+
+.hockey-hero::after {
+  content: '';
+  position: absolute;
+  bottom: -50px;
+  left: -50px;
+  width: 200px;
+  height: 200px;
+  background: radial-gradient(circle, rgba(122, 220, 180, 0.15) 0%, transparent 70%);
+  pointer-events: none;
+}
+
+.hockey-hero__badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(122, 220, 180, 0.15);
+  color: var(--hockey-primary);
+  border: 1px solid rgba(122, 220, 180, 0.3);
+  padding: 6px 16px;
+  border-radius: 50px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  margin-bottom: 20px;
+  text-transform: uppercase;
+}
+
+.hockey-hero h1 {
+  font-size: clamp(2rem, 5vw, 2.8rem);
+  font-weight: 800;
+  margin-bottom: 15px;
+  line-height: 1.2;
+}
+
+.hockey-hero h1 span {
+  color: var(--hockey-primary);
+  text-shadow: 0 0 15px rgba(122, 220, 180, 0.3);
+}
+
+.hockey-hero p {
+  font-size: 1.1rem;
+  color: rgba(255, 255, 255, 0.8);
+  max-width: 600px;
+  margin: 0 auto 30px;
+}
+
+/* شريط التبديل بين اللاعب والكوتش */
+.hockey-view-switch {
+  display: flex;
+  justify-content: center;
+  margin: -25px auto 40px;
+  position: relative;
+  z-index: 10;
+  max-width: 450px;
+  background: #fff;
+  padding: 6px;
+  border-radius: 50px;
+  box-shadow: 0 15px 35px rgba(50, 41, 49, 0.1);
+  border: 1px solid rgba(187, 187, 187, 0.2);
+}
+
+.hockey-switch-btn {
+  flex: 1;
+  padding: 12px 24px;
+  border: none;
+  background: transparent;
+  color: var(--hockey-dark);
+  font-family: var(--font);
+  font-size: 0.95rem;
+  font-weight: 600;
+  cursor: pointer;
+  border-radius: 50px;
+  transition: var(--transition);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+.hockey-switch-btn--active {
+  background: var(--hockey-dark);
+  color: var(--hockey-primary);
+}
+
+/* الحاويات والشبكة */
+.hockey-grid {
+  display: grid;
+  grid-template-columns: 1.5fr 1fr;
+  gap: 30px;
+  margin-bottom: 50px;
+}
+
+@media (max-width: 992px) {
+  .hockey-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* بطاقات الهوكي الفاخرة */
+.hockey-card {
+  background: #fff;
+  border-radius: var(--radius);
+  box-shadow: var(--hockey-card-shadow);
+  border: 1px solid rgba(50, 41, 49, 0.04);
+  padding: 30px;
+  position: relative;
+  overflow: hidden;
+  margin-bottom: 30px;
+  transition: var(--transition);
+}
+
+.hockey-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 15px 40px rgba(50, 41, 49, 0.1);
+}
+
+.hockey-card--primary-border {
+  border-top: 4px solid var(--hockey-primary);
+}
+
+.hockey-card--dark {
+  background: var(--hockey-dark);
+  color: #fff;
+}
+
+.hockey-card__title {
+  font-size: 1.25rem;
+  font-weight: 700;
+  margin-bottom: 20px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: var(--hockey-dark);
+}
+
+.hockey-card--dark .hockey-card__title {
+  color: #fff;
+}
+
+.hockey-card__title-icon {
+  font-size: 1.5rem;
+  color: var(--hockey-primary);
+}
+
+/* قسم الكوتش الأساسي */
+.coach-profile {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+}
+
+.coach-profile__avatar {
+  width: 75px;
+  height: 75px;
+  border-radius: 50%;
+  background: var(--hockey-dark);
+  border: 3px solid var(--hockey-primary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 2.2rem;
+  box-shadow: var(--hockey-glow-shadow);
+}
+
+.coach-profile__info h3 {
+  font-size: 1.15rem;
+  font-weight: 700;
+  margin-bottom: 4px;
+}
+
+.coach-profile__info p {
+  font-size: 0.88rem;
+  color: var(--hockey-dark-light);
+}
+
+.coach-profile__phone {
+  margin-top: 8px;
+  font-size: 0.88rem;
+  font-family: monospace;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--hockey-primary-dark);
+  font-weight: bold;
+}
+
+/* جدول اللاعبين */
+.players-table-wrapper {
+  overflow-x: auto;
+  margin-top: 15px;
+  border-radius: 12px;
+  border: 1px solid rgba(187, 187, 187, 0.2);
+}
+
+.players-table {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: right;
+}
+
+.players-table th {
+  background: var(--hockey-light-bg);
+  padding: 14px;
+  font-weight: 700;
+  font-size: 0.88rem;
+  color: var(--hockey-dark-light);
+  border-bottom: 2px solid rgba(187, 187, 187, 0.2);
+}
+
+.players-table td {
+  padding: 14px;
+  font-size: 0.9rem;
+  border-bottom: 1px solid rgba(187, 187, 187, 0.15);
+  vertical-align: middle;
+}
+
+.players-table tr:last-child td {
+  border-bottom: none;
+}
+
+.players-table tr:hover {
+  background: rgba(122, 220, 180, 0.04);
+}
+
+/* أزرار وعناصر تحكم الكوتش داخل الجدول */
+.delete-player-btn {
+  background: none;
+  border: none;
+  color: #e74c3c;
+  cursor: pointer;
+  padding: 5px;
+  border-radius: 4px;
+  font-size: 1.1rem;
+  transition: var(--transition);
+}
+
+.delete-player-btn:hover {
+  background: rgba(231, 76, 60, 0.1);
+}
+
+/* خيارات التصويت التفاعلية */
+.vote-section {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+
+.vote-option-card {
+  border: 2px solid rgba(187, 187, 187, 0.2);
+  border-radius: 12px;
+  padding: 16px;
+  cursor: pointer;
+  transition: var(--transition);
+  position: relative;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 15px;
+}
+
+.vote-option-card:hover {
+  border-color: var(--hockey-primary);
+  background: rgba(122, 220, 180, 0.03);
+}
+
+.vote-option-card--selected {
+  border-color: var(--hockey-primary);
+  background: rgba(122, 220, 180, 0.08);
+  box-shadow: var(--hockey-glow-shadow);
+}
+
+.vote-option-card__details {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  flex: 1;
+}
+
+.vote-option-card__title {
+  font-weight: 700;
+  font-size: 0.95rem;
+  color: var(--hockey-dark);
+}
+
+.vote-option-card__sub {
+  font-size: 0.82rem;
+  color: var(--hockey-dark-light);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.vote-option-card__map-link {
+  color: var(--hockey-primary-dark);
+  text-decoration: underline;
+  font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  margin-top: 2px;
+}
+
+.vote-option-card__map-link:hover {
+  color: var(--hockey-dark);
+}
+
+.vote-option-card__radio {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  border: 2px solid var(--hockey-silver);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  transition: var(--transition);
+}
+
+.vote-option-card--selected .vote-option-card__radio {
+  border-color: var(--hockey-primary);
+}
+
+.vote-option-card--selected .vote-option-card__radio::after {
+  content: '';
+  width: 10px;
+  height: 10px;
+  background: var(--hockey-primary);
+  border-radius: 50%;
+}
+
+/* شريط نتائج التصويت */
+.vote-result-bar-container {
+  margin-top: 8px;
+}
+
+.vote-result-bar-outer {
+  background: rgba(187, 187, 187, 0.15);
+  height: 8px;
+  border-radius: 4px;
+  overflow: hidden;
+  margin-top: 6px;
+}
+
+.vote-result-bar-inner {
+  background: var(--hockey-primary);
+  height: 100%;
+  border-radius: 4px;
+  transition: width 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 0 10px rgba(122, 220, 180, 0.5);
+}
+
+.vote-result-meta {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.8rem;
+  color: var(--hockey-dark-light);
+  font-weight: 600;
+}
+
+/* جدول التمارين المعتمدة */
+.finalized-workout {
+  border-right: 4px solid var(--hockey-primary);
+  background: rgba(122, 220, 180, 0.04);
+  padding: 16px;
+  border-radius: 0 12px 12px 0;
+  margin-bottom: 15px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 15px;
+  flex-wrap: wrap;
+}
+
+.finalized-workout__content {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.finalized-workout__title {
+  font-weight: 700;
+  font-size: 1.05rem;
+  color: var(--hockey-dark);
+}
+
+.finalized-workout__meta {
+  font-size: 0.85rem;
+  color: var(--hockey-dark-light);
+  display: flex;
+  gap: 15px;
+  flex-wrap: wrap;
+}
+
+.finalized-workout__location {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+/* الأزرار والمداخل */
+.hockey-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  background: var(--hockey-primary);
+  color: var(--hockey-dark);
+  font-family: var(--font);
+  font-weight: 700;
+  padding: 12px 24px;
+  border-radius: 50px;
+  border: none;
+  cursor: pointer;
+  transition: var(--transition);
+  text-decoration: none;
+  font-size: 0.95rem;
+}
+
+.hockey-btn:hover {
+  background: var(--hockey-primary-hover);
+  transform: translateY(-2px);
+  box-shadow: var(--hockey-glow-shadow);
+}
+
+.hockey-btn:disabled {
+  background: var(--hockey-silver);
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+.hockey-btn--outline {
+  background: transparent;
+  border: 2px solid var(--hockey-primary);
+  color: var(--hockey-primary-dark);
+}
+
+.hockey-btn--outline:hover {
+  background: rgba(122, 220, 180, 0.08);
+}
+
+.hockey-btn--dark {
+  background: var(--hockey-dark);
+  color: #fff;
+}
+
+.hockey-btn--dark:hover {
+  background: var(--hockey-dark-light);
+}
+
+.hockey-input-group {
+  margin-bottom: 15px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.hockey-input-group label {
+  font-size: 0.88rem;
+  font-weight: 600;
+  color: var(--hockey-dark);
+}
+
+.hockey-input {
+  width: 100%;
+  padding: 12px 16px;
+  border-radius: 8px;
+  border: 1px solid rgba(187, 187, 187, 0.5);
+  font-family: var(--font);
+  font-size: 0.95rem;
+  outline: none;
+  transition: var(--transition);
+}
+
+.hockey-input:focus {
+  border-color: var(--hockey-primary);
+  box-shadow: 0 0 0 3px rgba(122, 220, 180, 0.15);
+}
+
+/* نافذة إدخال الرمز السري للكوتش */
+.pin-modal {
+  position: fixed;
+  inset: 0;
+  background: rgba(50, 41, 49, 0.6);
+  backdrop-filter: blur(5px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 200;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.3s ease;
+}
+
+.pin-modal--open {
+  opacity: 1;
+  pointer-events: all;
+}
+
+.pin-modal__card {
+  background: #fff;
+  border-radius: var(--radius);
+  padding: 35px;
+  width: min(400px, 90%);
+  box-shadow: var(--hockey-glow-shadow);
+  text-align: center;
+  transform: translateY(20px);
+  transition: transform 0.3s ease;
+}
+
+.pin-modal--open .pin-modal__card {
+  transform: translateY(0);
+}
+
+.pin-dots {
+  display: flex;
+  justify-content: center;
+  gap: 15px;
+  margin: 25px 0;
+}
+
+.pin-dot {
+  width: 15px;
+  height: 15px;
+  border-radius: 50%;
+  border: 2px solid var(--hockey-silver);
+  transition: var(--transition);
+}
+
+.pin-dot--active {
+  background: var(--hockey-primary);
+  border-color: var(--hockey-primary);
+  box-shadow: var(--hockey-glow-shadow);
+}
+
+.pin-keyboard {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+  max-width: 250px;
+  margin: 0 auto;
+}
+
+.pin-key {
+  height: 50px;
+  border-radius: 50%;
+  border: 1px solid rgba(187, 187, 187, 0.3);
+  background: var(--hockey-light-bg);
+  font-family: var(--font);
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: var(--hockey-dark);
+  cursor: pointer;
+  transition: var(--transition);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.pin-key:hover {
+  background: var(--hockey-primary);
+  border-color: var(--hockey-primary);
+  color: var(--hockey-dark);
+}
+
+/* شارات الحالة */
+.badge-status {
+  display: inline-block;
+  padding: 4px 10px;
+  border-radius: 50px;
+  font-size: 0.75rem;
+  font-weight: bold;
+}
+
+.badge-status--active {
+  background: rgba(122, 220, 180, 0.15);
+  color: var(--hockey-primary-dark);
+}
+
+.badge-status--expired {
+  background: rgba(231, 76, 60, 0.1);
+  color: #e74c3c;
+}
+
+.badge-status--trial {
+  background: rgba(187, 187, 187, 0.15);
+  color: var(--hockey-dark-light);
+}
+
+/* التنبيهات */
+.hockey-toast {
+  position: fixed;
+  bottom: 25px;
+  left: 25px;
+  background: var(--hockey-dark);
+  color: #fff;
+  padding: 12px 24px;
+  border-radius: 8px;
+  border-right: 5px solid var(--hockey-primary);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+  z-index: 9999;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  transform: translateY(100px);
+  opacity: 0;
+  transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.hockey-toast--show {
+  transform: translateY(0);
+  opacity: 1;
+}
+
+/* إضافات مرئية - ملاعب الهوكي */
+.hockey-bg-pattern {
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 100%;
+  height: 100%;
+  opacity: 0.03;
+  pointer-events: none;
+  background-image: radial-gradient(var(--hockey-primary) 1px, transparent 1px);
+  background-size: 20px 20px;
+}

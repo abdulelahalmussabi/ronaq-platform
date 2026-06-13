@@ -1,0 +1,368 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <script src="js/theme-early.js"></script>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#322931">
+  <title>بوابة التمارين والتدريب | الاتحاد السعودي للهوكي</title>
+  
+  <!-- Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  
+  <!-- Stylesheets -->
+  <link rel="stylesheet" href="css/themes.css">
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="css/platform.css">
+  <link rel="stylesheet" href="css/coaching.css">
+  <link rel="icon" type="image/svg+xml" href="assets/logo.svg">
+</head>
+<body class="hockey-body">
+
+  <!-- الهيدر الخاص بالبوابة الرياضية -->
+  <header class="hockey-header">
+    <div class="container hockey-header__inner">
+      <a href="index.html" class="hockey-logo" aria-label="العودة للصفحة الرئيسية">
+        <span class="hockey-logo__symbol">🏑</span>
+        <div class="hockey-logo__text">
+          <span class="hockey-logo__title" data-brand="name">رونق الرياضي</span>
+          <span class="hockey-logo__subtitle">بوابة التدريب والتمارين - الاتحاد السعودي للهوكي</span>
+        </div>
+      </a>
+      <nav class="nav" id="nav">
+        <a href="index.html">الرئيسية</a>
+        <a href="book.html">حجز موعد</a>
+        <a href="order.html">اطلب الآن</a>
+        <a href="coaching.html" class="nav__active" style="color: var(--hockey-primary);">النشاط الرياضي</a>
+      </nav>
+      <a href="#" class="btn btn--primary header__cta" data-contact="whatsapp" style="background-color: var(--hockey-primary); color: var(--hockey-dark); border-color: var(--hockey-primary);" target="_blank" rel="noopener">مراسلة الكوتش</a>
+    </div>
+  </header>
+
+  <!-- هيرو الصفحة بتصميم الهوكي الفاخر -->
+  <section class="hockey-hero">
+    <div class="hockey-bg-pattern"></div>
+    <div class="container">
+      <span class="hockey-hero__badge">🏑 نشاط رياضي نشط</span>
+      <h1>بوابة التدريب والتمارين <span>السعودية للهوكي</span></h1>
+      <p>بوابتك الرسمية لمتابعة مواعيد التمارين، التصويت على المواقع المفضلة لخرائط جوجل، والاطلاع على قائمة اللاعبين والمدرب الأساسي.</p>
+    </div>
+  </section>
+
+  <!-- زر التبديل بين واجهة اللاعبين وواجهة الكوتش -->
+  <div class="container">
+    <div class="hockey-view-switch">
+      <button type="button" class="hockey-switch-btn hockey-switch-btn--active" id="btnViewTrainee">
+        <span>👥</span> بوابة اللاعبين والمتدربين
+      </button>
+      <button type="button" class="hockey-switch-btn" id="btnViewCoach">
+        <span>🔑</span> لوحة تحكم الكوتش
+      </button>
+    </div>
+  </div>
+
+  <main class="container">
+
+    <!-- ==========================================
+         1. واجهة المتدربين واللاعبين (Trainees View)
+         ========================================== -->
+    <div id="viewTrainee">
+      <div class="hockey-grid">
+        
+        <!-- العمود الأيمن: الكوتش الأساسي والتصويت والتمرين المعتمد -->
+        <div>
+          <!-- كارت الكوتش الأساسي -->
+          <div class="hockey-card hockey-card--primary-border">
+            <h3 class="hockey-card__title">
+              <span class="hockey-card__title-icon">🧢</span> الكوتش الأساسي للتمارين
+            </h3>
+            <div class="coach-profile">
+              <div class="coach-profile__avatar" id="coachAvatar">🧢</div>
+              <div class="coach-profile__info">
+                <h3 id="coachNameDisp">الكوتش ياسر السليماني</h3>
+                <p id="coachBioDisp">كوتش هوكي معتمد من الاتحاد السعودي للهوكي، مدرب المنتخب الوطني للفئات السنية وخبير تكتيكي.</p>
+                <a href="#" id="coachPhoneDisp" class="coach-profile__phone">📞 9665056138908</a>
+              </div>
+            </div>
+          </div>
+
+          <!-- كارت التمارين المعتمدة النهائية -->
+          <div class="hockey-card hockey-card--primary-border">
+            <h3 class="hockey-card__title">
+              <span class="hockey-card__title-icon">🏆</span> مواعيد التمارين الرسمية المعتمدة
+            </h3>
+            <p style="font-size: 0.9rem; color: var(--hockey-dark-light); margin-bottom: 20px;">
+              التمارين المعتمدة التي قررها المدرب بناءً على نتائج تصويت المجموعة. انقر على الزر لعرض الموقع على الخريطة.
+            </p>
+            <div id="workoutsList">
+              <!-- سيتم تحميل التمارين المعتمدة برمجياً -->
+            </div>
+          </div>
+
+          <!-- نموذج التصويت التفاعلي للمتدربين -->
+          <div class="hockey-card hockey-card--primary-border" id="traineeVotingBlock">
+            <h3 class="hockey-card__title">
+              <span class="hockey-card__title-icon">🗳️</span> تصويت اللاعبين على التمرين القادم
+            </h3>
+            <p style="font-size: 0.9rem; color: var(--hockey-dark-light); margin-bottom: 20px;" id="pollQuestionTitle">
+              صوّت الآن على الموعد المناسب والموقع المفضل لديك للتمرين القادم للهوكي.
+            </p>
+
+            <form id="activePollForm">
+              <div id="pollContainer">
+                <h4 style="font-size: 0.95rem; margin-bottom: 12px; color: var(--hockey-dark);">١. اختر الموعد المفضل لديك للتمرين:</h4>
+                <div class="vote-section" id="timingsVoteOptions" style="margin-bottom: 25px;">
+                  <!-- خيارات التوقيت برمجياً -->
+                </div>
+
+                <h4 style="font-size: 0.95rem; margin-bottom: 12px; color: var(--hockey-dark);">٢. اختر موقع الملعب المفضل لديك (خرائط جوجل):</h4>
+                <div class="vote-section" id="locationsVoteOptions" style="margin-bottom: 25px;">
+                  <!-- خيارات الموقع برمجياً -->
+                </div>
+              </div>
+
+              <!-- بيانات اللاعب المصوت لمنع التكرار -->
+              <div style="background: var(--hockey-light-bg); padding: 20px; border-radius: 12px; margin-bottom: 20px; border: 1px dashed var(--hockey-silver);">
+                <h4 style="font-size: 0.95rem; margin-bottom: 15px; color: var(--hockey-dark);">٣. بياناتك للتحقق وتسجيل التصويت:</h4>
+                <div class="hockey-grid" style="grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 0;">
+                  <div class="hockey-input-group" style="margin-bottom: 0;">
+                    <label for="voterName">اسمك بالكامل *</label>
+                    <input type="text" id="voterName" class="hockey-input" required placeholder="مثال: أحمد الحربي">
+                  </div>
+                  <div class="hockey-input-group" style="margin-bottom: 0;">
+                    <label for="voterPhone">رقم الجوال للتحقق *</label>
+                    <input type="tel" id="voterPhone" class="hockey-input" required placeholder="05xxxxxxxx" dir="ltr">
+                  </div>
+                </div>
+              </div>
+
+              <button type="submit" class="hockey-btn" style="width: 100%;">🏑 إرسال تصويتي وتسجيل الحضور</button>
+            </form>
+          </div>
+
+        </div>
+
+        <!-- العمود الأيسر: نتائج التصويت واللاعبين المقيدين -->
+        <div>
+          <!-- كارت نتائج التصويت الحية -->
+          <div class="hockey-card" style="background-color: var(--hockey-dark); color: #fff;">
+            <div id="pollResults">
+              <!-- سيتم تحميل النتائج والنسب المئوية برمجياً -->
+            </div>
+          </div>
+
+          <!-- كارت قائمة اللاعبين المقيدين -->
+          <div class="hockey-card hockey-card--primary-border">
+            <h3 class="hockey-card__title">
+              <span class="hockey-card__title-icon">👥</span> اللاعبين المقيدين بالنشاط
+            </h3>
+            <p style="font-size: 0.85rem; color: var(--hockey-dark-light); margin-bottom: 15px;">
+              قائمة باللاعبين المعتمدين لحضور التمارين مع الكوتش الأساسي وحالة اشتراكاتهم الحالية.
+            </p>
+            <div class="players-table-wrapper">
+              <table class="players-table">
+                <thead>
+                  <tr>
+                    <th>#</th>
+                    <th>الاسم</th>
+                    <th>حالة الاشتراك</th>
+                  </tr>
+                </thead>
+                <tbody id="playersListBody">
+                  <!-- سيتم تحميل اللاعبين برمجياً -->
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+
+    <!-- ==========================================
+         2. لوحة تحكم وإدارة الكوتش (Coach View)
+         ========================================== -->
+    <div id="viewCoach" hidden>
+      <div class="hockey-grid">
+        
+        <!-- العمود الأيمن: تعديل الكوتش والتحكم بالتصويت -->
+        <div>
+          <!-- كارت تعديل معلومات الكوتش الأساسي -->
+          <div class="hockey-card hockey-card--primary-border">
+            <h3 class="hockey-card__title">
+              <span class="hockey-card__title-icon">⚙️</span> إدارة الملف الشخصي للمدرب
+            </h3>
+            <form id="coachInfoForm">
+              <div class="hockey-input-group">
+                <label for="editCoachName">اسم الكوتش الأساسي *</label>
+                <input type="text" id="editCoachName" class="hockey-input" required>
+              </div>
+              <div class="hockey-input-group">
+                <label for="editCoachBio">النبذة والخبرات والتخصصات *</label>
+                <textarea id="editCoachBio" class="hockey-input" rows="3" required></textarea>
+              </div>
+              <div class="hockey-input-group">
+                <label for="editCoachPhone">رقم جوال المدرب للتواصل (واتساب) *</label>
+                <input type="tel" id="editCoachPhone" class="hockey-input" required dir="ltr">
+              </div>
+              <button type="submit" class="hockey-btn">💾 حفظ التحديثات</button>
+            </form>
+          </div>
+
+          <!-- كارت إنشاء تصويت جديد للتمارين -->
+          <div class="hockey-card hockey-card--primary-border">
+            <h3 class="hockey-card__title">
+              <span class="hockey-card__title-icon">🗳️</span> إطلاق تصويت تمرين جديد
+            </h3>
+            <p style="font-size: 0.85rem; color: var(--hockey-dark-light); margin-bottom: 15px;">
+              عند إطلاق تصويت جديد، سيتم تصفير الأصوات السابقة وإتاحة الخيارات الجديدة للاعبين للتصويت عليها.
+            </p>
+            <form id="createPollForm">
+              <!-- خيارات المواعيد -->
+              <h4 style="font-size: 0.95rem; margin-bottom: 10px; color: var(--hockey-dark); border-bottom: 1px solid rgba(187,187,187,0.2); padding-bottom:5px;">خيارات المواعيد المقترحة:</h4>
+              <div class="hockey-grid" style="grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 15px;">
+                <div class="hockey-input-group" style="margin-bottom: 0;">
+                  <label for="pollTime1">الموعد الأول *</label>
+                  <input type="text" id="pollTime1" class="hockey-input" required placeholder="الأحد - 06:00 مساءً">
+                </div>
+                <div class="hockey-input-group" style="margin-bottom: 0;">
+                  <label for="pollTime2">الموعد الثاني *</label>
+                  <input type="text" id="pollTime2" class="hockey-input" required placeholder="الأربعاء - 08:00 مساءً">
+                </div>
+              </div>
+
+              <!-- خيارات المواقع الجغرافية -->
+              <h4 style="font-size: 0.95rem; margin-bottom: 10px; color: var(--hockey-dark); border-bottom: 1px solid rgba(187,187,187,0.2); padding-bottom:5px;">خيارات الملاعب والمواقع الجغرافية:</h4>
+              <div style="background: var(--hockey-light-bg); padding: 15px; border-radius: 8px; margin-bottom: 15px;">
+                <h5 style="font-weight: 700; margin-bottom: 8px;">📍 الملعب الأول:</h5>
+                <div class="hockey-grid" style="grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 0;">
+                  <div class="hockey-input-group" style="margin-bottom: 0;">
+                    <label for="pollLoc1Name">اسم الملعب/الموقع *</label>
+                    <input type="text" id="pollLoc1Name" class="hockey-input" required placeholder="مجمع الأمير فيصل بن فهد">
+                  </div>
+                  <div class="hockey-input-group" style="margin-bottom: 0;">
+                    <label for="pollLoc1Url">رابط جوجل ماب *</label>
+                    <input type="url" id="pollLoc1Url" class="hockey-input" required placeholder="https://maps.google.com/?q=..." dir="ltr">
+                  </div>
+                </div>
+              </div>
+
+              <div style="background: var(--hockey-light-bg); padding: 15px; border-radius: 8px; margin-bottom: 20px;">
+                <h5 style="font-weight: 700; margin-bottom: 8px;">📍 الملعب الثاني:</h5>
+                <div class="hockey-grid" style="grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 0;">
+                  <div class="hockey-input-group" style="margin-bottom: 0;">
+                    <label for="pollLoc2Name">اسم الملعب/الموقع *</label>
+                    <input type="text" id="pollLoc2Name" class="hockey-input" required placeholder="ملاعب معهد إعداد القادة">
+                  </div>
+                  <div class="hockey-input-group" style="margin-bottom: 0;">
+                    <label for="pollLoc2Url">رابط جوجل ماب *</label>
+                    <input type="url" id="pollLoc2Url" class="hockey-input" required placeholder="https://maps.google.com/?q=..." dir="ltr">
+                  </div>
+                </div>
+              </div>
+
+              <button type="submit" class="hockey-btn" style="background-color: var(--hockey-dark); color: #fff;">📢 إطلاق وإعادة تعيين التصويت</button>
+            </form>
+          </div>
+        </div>
+
+        <!-- العمود الأيسر: إدارة اللاعبين واعتماد التمرين النهائي -->
+        <div>
+          <!-- كارت اعتماد التمرين النهائي المكتمل -->
+          <div class="hockey-card" style="border-top: 4px solid var(--hockey-dark);" id="managePollContainer">
+            <h3 class="hockey-card__title">
+              <span class="hockey-card__title-icon">📢</span> اعتماد موعد التمرين ونشره
+            </h3>
+            <p style="font-size: 0.85rem; margin-bottom: 20px;">
+              حدد الموعد والموقع النهائيين للتمرين بناءً على نتائج تصويت المتدربين الحالية لنشرها رسمياً للاعبين وإغلاق التصويت.
+            </p>
+            <div class="hockey-input-group">
+              <label for="finalizeTimingSelect">اختر التوقيت النهائي المعتمد:</label>
+              <select id="finalizeTimingSelect" class="hockey-input">
+                <!-- تعبأ تلقائياً بالخيارات -->
+              </select>
+            </div>
+            <div class="hockey-input-group" style="margin-bottom: 25px;">
+              <label for="finalizeLocationSelect">اختر موقع الملعب النهائي المعتمد:</label>
+              <select id="finalizeLocationSelect" class="hockey-input">
+                <!-- تعبأ تلقائياً بالخيارات -->
+              </select>
+            </div>
+            <button type="button" class="hockey-btn" style="width:100%;" id="btnFinalizeWorkout">🏆 اعتماد ونشر التمرين رسمياً</button>
+          </div>
+
+          <!-- كارت إضافة لاعبين للقائمة المقيدة -->
+          <div class="hockey-card hockey-card--primary-border">
+            <h3 class="hockey-card__title">
+              <span class="hockey-card__title-icon">➕</span> تسجيل لاعب جديد بالاتحاد
+            </h3>
+            <form id="addPlayerForm">
+              <div class="hockey-input-group">
+                <label for="newPlayerName">اسم اللاعب بالكامل *</label>
+                <input type="text" id="newPlayerName" class="hockey-input" required placeholder="مثال: خالد القحطاني">
+              </div>
+              <div class="hockey-input-group">
+                <label for="newPlayerPhone">رقم الجوال *</label>
+                <input type="tel" id="newPlayerPhone" class="hockey-input" required placeholder="05xxxxxxxx" dir="ltr">
+              </div>
+              <div class="hockey-input-group" style="margin-bottom: 20px;">
+                <label for="newPlayerStatus">حالة الاشتراك:</label>
+                <select id="newPlayerStatus" class="hockey-input">
+                  <option value="active">مشترك نشط</option>
+                  <option value="trial">فترة تجريبية</option>
+                  <option value="expired">منتهي الاشتراك</option>
+                </select>
+              </div>
+              <button type="submit" class="hockey-btn">➕ تسجيل اللاعب بقائمة التمرين</button>
+            </form>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+  </main>
+
+  <!-- نافذة تسجيل دخول الكوتش بالرمز السري (PIN Modal) -->
+  <div class="pin-modal" id="pinModal">
+    <div class="pin-modal__card">
+      <div style="font-size: 3rem; margin-bottom: 10px;">🔐</div>
+      <h3 style="color: var(--hockey-dark);">تسجيل دخول الكوتش</h3>
+      <p style="font-size: 0.85rem; color: var(--hockey-dark-light); margin-top: 5px;">
+        أدخل الرمز السري المكون من 4 أرقام للوصول للوحة تحكم التمارين (الافتراضي: 1234)
+      </p>
+
+      <!-- نقاط الرمز السري -->
+      <div class="pin-dots" id="pinDotsContainer">
+        <div class="pin-dot"></div>
+        <div class="pin-dot"></div>
+        <div class="pin-dot"></div>
+        <div class="pin-dot"></div>
+      </div>
+
+      <!-- الكيبورد البرمجية التفاعلية -->
+      <div class="pin-keyboard" id="pinKeyboard">
+        <!-- تولد الأزرار برمجياً -->
+      </div>
+    </div>
+  </div>
+
+  <!-- توست التنبيهات -->
+  <div class="hockey-toast" id="hockeyToast">
+    <span>🏑</span>
+    <span id="toastMessage">تم تسجيل تصويتك بنجاح</span>
+  </div>
+
+  <!-- Scripts -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="js/activities-catalog.js"></script>
+  <script src="js/services-catalog.js"></script>
+  <script src="js/services-store.js"></script>
+  <script src="js/supabase-db.js"></script>
+  <script src="js/coaching.js"></script>
+
+</body>
+</html>
