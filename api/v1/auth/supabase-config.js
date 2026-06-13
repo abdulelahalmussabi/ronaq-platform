@@ -22,6 +22,7 @@ module.exports = async function handler(req, res) {
   return res.status(200).json({
     supabaseUrl,
     supabaseKey,
-    enabled: !!(supabaseUrl && supabaseKey)
+    enabled: !!(supabaseUrl && supabaseKey),
+    envKeys: Object.keys(process.env).filter(k => k.includes('SUPABASE') || k.includes('KEY'))
   });
 };
