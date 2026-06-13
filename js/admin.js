@@ -1431,6 +1431,21 @@
   }
 
   store.init().then(function () {
+    // Check if Supabase database is connected for SaaS features
+    var db = window.MkenSupabaseDb;
+    var regError = document.getElementById('registerError');
+    if (regError && (!db || !db.isConfigured())) {
+      regError.innerHTML = '⚠️ قاعدة بيانات Supabase غير متصلة.<br>يرجى إضافة المتغيرات البيئية <code>SUPABASE_URL</code> و <code>SUPABASE_KEY</code> (مفتاح Anon الخاص بك) في إعدادات مشروع Vercel وإعادة النشر.';
+      regError.style.color = '#e74c3c';
+      regError.style.display = 'block';
+      regError.style.fontSize = '14px';
+      regError.style.lineHeight = '1.5';
+      regError.hidden = false;
+      
+      var regBtn = document.getElementById('registerSubmitBtn');
+      if (regBtn) regBtn.disabled = true;
+    }
+
     if (store.isAdminLoggedIn()) {
       showAdmin();
       startWhatsappAutomationPolling();
