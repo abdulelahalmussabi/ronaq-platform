@@ -112,6 +112,7 @@
       <button type="button" class="admin-tab" data-tab="appointments">المواعيد</button>
       <button type="button" class="admin-tab" data-tab="orders">الطلبات</button>
       <button type="button" class="admin-tab" data-tab="staff">الموظفين</button>
+      <button type="button" class="admin-tab" data-tab="coaching">بوابة التمارين 🏑</button>
       <button type="button" class="admin-tab" data-tab="supabase">الربط والأتمتة</button>
       <button type="button" class="admin-tab" data-tab="whatsapp-logs">سجل الرسائل</button>
       <button type="button" class="admin-tab" data-tab="saas">الاشتراك والخرائط</button>
@@ -774,6 +775,35 @@ ALTER TABLE mken_appointments ADD COLUMN IF NOT EXISTS payment_amount NUMERIC;</
               <a id="staffPortalLink" href="staff.html" target="_blank" style="color:var(--color-primary); font-weight:bold; text-decoration:underline;">staff.html</a>
             </div>
             <p class="admin-hint" style="margin-top:10px;">يمكن للفني تسجيل الدخول باستخدام معرف المنشأة (Slug)، رقم جواله، ورمز PIN السري الخاص به.</p>
+          </section>
+        </div>
+      </div>
+
+      <!-- لوحة تحكم النشاط الرياضي المضافة حديثاً -->
+      <div class="admin-tab-panel" data-panel="coaching" hidden>
+        <div class="admin-grid">
+          <section class="admin-section" style="flex:2">
+            <h3>بوابة النشاط الرياضي والتمارين (الهوكي 🏑)</h3>
+            <p class="admin-hint">
+              تم تصميم وتفعيل بوابة مستقلة لإدارة التمارين والنشاط الرياضي للهوكي. تتيح هذه البوابة للمتدربين التصويت على مواعيد التمرين واختيار الملعب المفضل على خرائط جوجل، وتتيح للمدرب إدارة قائمة اللاعبين والتصويت واعتماد المواعيد.
+            </p>
+            <div style="margin-top:25px; display:flex; gap:12px; flex-wrap:wrap;">
+              <a href="coaching.html" class="btn btn--primary" target="_blank">🥇 الانتقال لبوابة التمارين والتصويت</a>
+            </div>
+          </section>
+          
+          <section class="admin-section" style="flex:1">
+            <h3>تفاصيل الدخول والإعدادات</h3>
+            <p class="admin-hint" style="margin-bottom:12px;"><strong>رابط البوابة المباشر:</strong></p>
+            <div style="background:#faf8f5; padding:12px; border-radius:4px; border:1px solid var(--color-border); word-break:break-all; font-family:monospace; font-size:0.85rem; margin-bottom:15px;">
+              <a href="coaching.html" target="_blank" style="color:var(--color-primary); font-weight:bold; text-decoration:underline;">coaching.html</a>
+            </div>
+            <p class="admin-hint">
+              <strong>رمز PIN الافتراضي للكوتش:</strong> <code style="background:#e2f3e4; color:#275a36; padding:3px 8px; border-radius:4px; font-weight:bold; font-family:monospace;">1234</code>
+            </p>
+            <p class="admin-hint" style="margin-top:10px;">
+              تم تنسيق البوابة بالكامل لتتبع الهوية البصرية الرسمية للاتحاد السعودي للهوكي (اللون النعناعي والباذنجاني الفحمي).
+            </p>
           </section>
         </div>
       </div>
