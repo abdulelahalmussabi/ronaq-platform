@@ -900,37 +900,37 @@ window.MkenServicesCatalog = [
   /* ─── ضيافة وفنادق ─── */
   {
     id: 'standard-room', activityId: 'hotels', icon: '🛏️', title: 'غرفة قياسية', shortTitle: 'قياسية',
-    description: 'غرفة مزدوجة مريحة — إفطار، WiFi، وخدمة الغرف.', slotDuration: 60, featured: true,
+    description: 'غرفة مزدوجة مريحة — إفطار، WiFi، وخدمة الغرف.', stayUnit: 'night', roomCount: 8, featured: true,
     features: ['سرير مزدوج', 'إفطار', 'WiFi'], category: 'غرف',
     svg: '<rect x="10" y="18" width="28" height="20" rx="2" stroke="currentColor" stroke-width="2"/><path d="M10 26h28" stroke="currentColor" stroke-width="2"/>',
   },
   {
     id: 'deluxe-room', activityId: 'hotels', icon: '✨', title: 'غرفة ديلوكس', shortTitle: 'ديلوكس',
-    description: 'مساحة أوسع وإطلالة — مناسبة للأزواج والعائلات الصغيرة.', slotDuration: 60,
+    description: 'مساحة أوسع وإطلالة — مناسبة للأزواج والعائلات الصغيرة.', stayUnit: 'night', roomCount: 4,
     features: ['إطلالة', 'minibar', 'حمام فاخر'], category: 'غرف',
     svg: '<rect x="8" y="16" width="32" height="24" rx="2" stroke="currentColor" stroke-width="2"/>',
   },
   {
     id: 'suite-room', activityId: 'hotels', icon: '🏛️', title: 'جناح فندقي', shortTitle: 'جناح',
-    description: 'جناح بغرفة معيشة — للإقامات الفاخرة والضيوف VIP.', slotDuration: 60,
+    description: 'جناح بغرفة معيشة — للإقامات الفاخرة والضيوف VIP.', stayUnit: 'night', roomCount: 2,
     features: ['غرفة معيشة', 'VIP', 'خدمة خاصة'], category: 'أجنحة',
     svg: '<rect x="6" y="14" width="36" height="26" rx="2" stroke="currentColor" stroke-width="2"/>',
   },
   {
     id: 'family-suite', activityId: 'hotels', icon: '👨‍👩‍👧‍👦', title: 'جناح عائلي', shortTitle: 'عائلي',
-    description: 'جناح واسع لـ 4–6 أشخاص — مطبخ صغير وغرف نوم متعددة.', slotDuration: 60,
+    description: 'جناح واسع لـ 4–6 أشخاص — مطبخ صغير وغرف نوم متعددة.', stayUnit: 'night', roomCount: 3,
     features: ['4–6 أشخاص', 'مطبخ', 'غرفتان'], category: 'أجنحة',
     svg: '<circle cx="16" cy="22" r="4" stroke="currentColor" stroke-width="2"/><circle cx="32" cy="22" r="4" stroke="currentColor" stroke-width="2"/>',
   },
   {
     id: 'chalet-stay', activityId: 'hotels', icon: '🏡', title: 'شاليه', shortTitle: 'شاليه',
-    description: 'شاليه خاص بحديقة أو مسبح — مثالي للعطلات.', slotDuration: 60,
+    description: 'شاليه خاص بحديقة أو مسبح — مثالي للعطلات.', stayUnit: 'night', roomCount: 2,
     features: ['خصوصية', 'حديقة', 'مسبح'], category: 'شاليهات',
     svg: '<path d="M12 32V20l12-10 12 10v12" stroke="currentColor" stroke-width="2"/>',
   },
   {
     id: 'long-stay-hotel', activityId: 'hotels', icon: '📅', title: 'إقامة طويلة', shortTitle: 'طويلة',
-    description: 'أسعار خاصة للإقامات الأسبوعية والشهرية — موظفين وعائلات.', slotDuration: 60,
+    description: 'أسعار خاصة للإقامات الشهرية — موظفين وعائلات.', stayUnit: 'month', roomCount: 2,
     features: ['أسعار أسبوعية', 'خصم', 'مرونة'], category: 'طويلة',
     svg: '<rect x="12" y="10" width="24" height="28" rx="2" stroke="currentColor" stroke-width="2"/>',
   },

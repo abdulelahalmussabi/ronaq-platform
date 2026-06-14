@@ -25,7 +25,43 @@
   var bookingForm = document.getElementById('bookingForm');
   var activityNav = document.getElementById('bookingActivityNav');
 
-  var STEP_LABELS = ['الخدمة', 'التاريخ', 'الوقت', 'البيانات'];
+  var STEP_LABELS_DEFAULT = ['الخدمة', 'التاريخ', 'الوقت', 'البيانات'];
+  var STEP_LABELS_STAY = ['الخدمة', 'تاريخ الوصول', 'البيانات'];
+
+  function isStayBooking() {
+    var b = store.getBookingForActivity(activeActivityId, config);
+    return bookingStore.isStayBooking(b);
+  }
+
+  function needsMonths() {
+    return !!(selectedService && selectedService.stayUnit === 'month');
+  }
+
+  function getStepLabels() {
+    return isStayBooking() ? STEP_LABELS_STAY : STEP_LABELS_DEFAULT;
+  }
+
+  function getServiceBadge(svc) {
+    if (!svc) return '';
+    if (isStayBooking()) {
+      var rooms = bookingStore.getRoomCapacity(svc, getEffectiveBooking());
+      if (svc.stayUnit === 'month') return rooms + ' وحدة · بالشهر';
+      return rooms + ' غرفة · بالليلة';
+    }
+    if (svc.slotDuration) return svc.slotDuration + ' د';
+    return '';
+  }
+
+  function updateDateStepUi() {
+    var btnToTime = document.getElementById('btnToTime');
+    var panelDateTitle = document.querySelector('#panelDate h2');
+    if (btnToTime) {
+      btnToTime.textContent = isStayBooking() ? 'التالي: البيانات' : 'التالي: الوقت';
+    }
+    if (panelDateTitle) {
+      panelDateTitle.textContent = isStayBooking() ? '٢ — تاريخ الوصول' : '٢ — اختر التاريخ';
+    }
+  }
 
   function esc(str) {
     return String(str || '').replace(/&/g, '&amp;').replace(/</g, '&lt;');
@@ -36,11 +72,7 @@
   }
 
   function getEffectiveBooking() {
-    var b = store.getBookingForActivity(activeActivityId, config);
-    if (selectedService && selectedService.slotDuration) {
-      b = Object.assign({}, b, { slotDuration: selectedService.slotDuration });
-    }
-    return b;
+    return store.getBookingForActivity(activeActivityId, config);
   }
 
   function needsAddress() {
@@ -54,7 +86,8 @@
   }
 
   function setStep(step) {
-    bookingSteps.innerHTML = STEP_LABELS.map(function (label, i) {
+    var labels = getStepLabels();
+    bookingSteps.innerHTML = labels.map(function (label, i) {
       var cls = 'booking-step-indicator';
       if (i + 1 === step) cls += ' booking-step-indicator--active';
       else if (i + 1 < step) cls += ' booking-step-indicator--done';
@@ -128,6 +161,7 @@
     selectedTime = '';
     updateHero();
     renderActivityNav();
+    updateDateStepUi();
     renderServices();
     showPanel('panelService');
     setStep(1);
@@ -142,11 +176,12 @@
     }
     bookingServices.innerHTML = enabled.map(function (s) {
       var sel = selectedService && selectedService.id === s.id ? ' booking-service--selected' : '';
-      var dur = s.slotDuration ? '<small>' + s.slotDuration + ' د</small>' : '';
+      var badge = getServiceBadge(s);
+      var meta = badge ? '<small>' + esc(badge) + '</small>' : '';
       return (
         '<button type="button" class="booking-service' + sel + '" data-id="' + s.id + '">' +
         '<span class="booking-service__icon">' + s.icon + '</span>' +
-        '<span>' + esc(s.shortTitle) + '</span>' + dur +
+        '<span>' + esc(s.shortTitle) + '</span>' + meta +
         '</button>'
       );
     }).join('');
@@ -158,6 +193,7 @@
         selectedDate = '';
         selectedTime = '';
         booking = getEffectiveBooking();
+        updateDateStepUi();
         renderServices();
         document.getElementById('btnToDate').disabled = !selectedService;
       });
@@ -174,7 +210,7 @@
     var todayStr = bookingStore.formatDateISO(new Date());
     var b = getEffectiveBooking();
     var available = selectedService
-      ? bookingStore.getAvailableDates(selectedService.id, b, appointments)
+      ? bookingStore.getAvailableDates(selectedService.id, b, appointments, selectedService)
       : [];
 
     var html = bookingStore.AR_DAYS.map(function (d) {
@@ -216,23 +252,37 @@
   function renderSlots() {
     var label = document.getElementById('selectedDateLabel');
     var noSlots = document.getElementById('noSlotsMsg');
-    label.textContent = 'التاريخ: ' + bookingStore.formatDateArabic(selectedDate);
+    label.textContent = (isStayBooking() ? 'تاريخ الوصول: ' : 'التاريخ: ') + bookingStore.formatDateArabic(selectedDate);
 
+    var b = getEffectiveBooking();
     var slots = bookingStore.getSlotsForDate(
       selectedService.id,
       selectedDate,
-      getEffectiveBooking(),
-      appointments
+      b,
+      appointments,
+      selectedService
     );
 
     if (!slots.length) {
       bookingSlots.innerHTML = '';
       noSlots.hidden = false;
+      if (noSlots) {
+        noSlots.textContent = isStayBooking()
+          ? 'لا توجد غرف متاحة في هذا التاريخ — اختر تاريخاً آخر.'
+          : 'لا توجد أوقات متاحة — اختر تاريخاً آخر.';
+      }
       document.getElementById('btnToForm').disabled = true;
       return;
     }
 
     noSlots.hidden = true;
+    if (isStayBooking()) {
+      selectedTime = slots[0];
+      bookingSlots.innerHTML = '<p class="booking-empty">تسجيل الوصول الساعة ' + esc(bookingStore.formatTimeArabic(selectedTime)) + '</p>';
+      document.getElementById('btnToForm').disabled = false;
+      return;
+    }
+
     bookingSlots.innerHTML = slots.map(function (slot) {
       var sel = slot === selectedTime ? ' booking-slot--selected' : '';
       return '<button type="button" class="booking-slot' + sel + '" data-time="' + slot + '">' +
@@ -253,8 +303,12 @@
       '<dl>' +
       (activeActivity ? '<dt>النشاط</dt><dd>' + activeActivity.icon + ' ' + esc(activeActivity.title) + '</dd>' : '') +
       '<dt>الخدمة</dt><dd>' + selectedService.icon + ' ' + esc(selectedService.title) + '</dd>' +
-      '<dt>' + (needsNights() ? 'تاريخ الوصول' : 'التاريخ') + '</dt><dd>' + bookingStore.formatDateArabic(selectedDate) + '</dd>' +
-      '<dt>الوقت</dt><dd>' + bookingStore.formatTimeArabic(selectedTime) + '</dd>';
+      '<dt>' + (isStayBooking() ? 'تاريخ الوصول' : 'التاريخ') + '</dt><dd>' + bookingStore.formatDateArabic(selectedDate) + '</dd>';
+    if (!isStayBooking()) {
+      html += '<dt>الوقت</dt><dd>' + bookingStore.formatTimeArabic(selectedTime) + '</dd>';
+    } else if (selectedTime) {
+      html += '<dt>تسجيل الوصول</dt><dd>' + bookingStore.formatTimeArabic(selectedTime) + '</dd>';
+    }
     html += '</dl>';
     bookingSummary.innerHTML = html;
   }
@@ -287,6 +341,14 @@
     if (partyBlock) partyBlock.hidden = !party;
     if (nightsBlock) nightsBlock.hidden = !nights;
     if (partyLabel) partyLabel.textContent = getPartySizeLabel() + (party ? ' *' : '');
+    var nightsLabel = document.querySelector('label[for="stayNights"]');
+    var nightsInput = document.getElementById('stayNights');
+    if (nightsLabel) nightsLabel.textContent = needsMonths() ? 'عدد الأشهر *' : 'عدد الليالي *';
+    if (nightsInput) {
+      nightsInput.placeholder = needsMonths() ? 'مثال: 3' : 'مثال: 2';
+      nightsInput.max = needsMonths() ? '24' : '90';
+      nightsInput.min = '1';
+    }
     if (districtField) {
       districtField.required = need;
       if (!need && !party) districtField.value = '';
@@ -474,17 +536,31 @@
     if (party && !partySize) return;
     if (nightsRequired && !nights) return;
 
+    if (isStayBooking() && !bookingStore.isStayRangeAvailable(
+      selectedService.id,
+      selectedDate,
+      nights || 1,
+      selectedService,
+      getEffectiveBooking(),
+      appointments
+    )) {
+      alert('عذراً، لا توجد غرف متاحة للفترة المطلوبة. جرّب تاريخاً أو مدة مختلفة.');
+      return;
+    }
+
     var appointment = {
       activityId: activeActivityId,
       serviceId: selectedService.id,
       date: selectedDate,
-      time: selectedTime,
+      time: selectedTime || (getEffectiveBooking().checkInTime || '15:00'),
       customerName: name,
       phone: phone,
       district: district,
       locationAddress: address,
       partySize: partySize,
       nights: nights,
+      stayUnit: selectedService.stayUnit || (needsMonths() ? 'month' : 'night'),
+      stayBooking: isStayBooking(),
       notes: notes,
       status: 'pending',
     };
@@ -616,6 +692,22 @@
     });
 
     document.getElementById('btnToTime').addEventListener('click', function () {
+      if (isStayBooking()) {
+        var b = getEffectiveBooking();
+        var slots = bookingStore.getSlotsForDate(
+          selectedService.id,
+          selectedDate,
+          b,
+          appointments,
+          selectedService
+        );
+        selectedTime = slots[0] || b.checkInTime || '15:00';
+        renderSummary();
+        toggleFormFields();
+        showPanel('panelForm');
+        setStep(3);
+        return;
+      }
       showPanel('panelTime');
       setStep(3);
       renderSlots();
@@ -681,6 +773,7 @@
     applyBrand();
     applyContact();
     updateHero();
+    updateDateStepUi();
     renderActivityNav();
 
     if (!booking.enabled || !enabled.length) {

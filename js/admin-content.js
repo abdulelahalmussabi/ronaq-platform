@@ -356,6 +356,10 @@
         category: document.getElementById(prefix + 'category').value.trim(),
         features: linesToArray(document.getElementById(prefix + 'features').value),
         price: priceEl ? priceEl.value.trim() : '',
+        roomCount: (function () {
+          var el = document.getElementById(prefix + 'roomCount');
+          return el ? el.value.trim() : '';
+        })(),
       },
     };
   }
@@ -379,6 +383,7 @@
       '<div class="admin-field"><label>اسم الخدمة</label><input id="' + p + 'title" class="admin-input" value="' + esc(data.title) + '"></div>' +
       '<div class="admin-field"><label>اسم مختصر</label><input id="' + p + 'shortTitle" class="admin-input" value="' + esc(data.shortTitle) + '"></div>' +
       '<div class="admin-field"><label>السعر (ر.س — اتركه فارغاً للدفع عند الحضور أو مجاني)</label><input type="number" min="0" step="any" id="' + p + 'price" class="admin-input" placeholder="مثال: 150" value="' + esc(data.price || '') + '"></div>' +
+      '<div class="admin-field"><label>عدد الغرف المتاحة (للفنادق)</label><input type="number" min="1" max="200" id="' + p + 'roomCount" class="admin-input" placeholder="مثال: 5" value="' + esc(data.roomCount || '') + '"><small class="admin-hint">كل غرفة محجوزة تُخصم من العدد — التاريخ يبقى متاحاً حتى نفاد الغرف</small></div>' +
       '<div class="admin-field"><label>التصنيف</label><input id="' + p + 'category" class="admin-input" value="' + esc(data.category) + '"></div>' +
       '<div class="admin-field"><label>الوصف</label><textarea id="' + p + 'desc" class="admin-input admin-textarea" rows="2">' + esc(data.description) + '</textarea></div>' +
       '<div class="admin-field"><label>المميزات (سطر لكل ميزة)</label><textarea id="' + p + 'features" class="admin-input admin-textarea" rows="4">' + esc(arrayToLines(data.features)) + '</textarea></div>' +

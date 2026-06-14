@@ -231,9 +231,13 @@
     getCatalog().forEach(function (svc) {
       var ov = incoming[svc.id] || {};
       var entry = {};
-      ['icon', 'title', 'shortTitle', 'description', 'category', 'price'].forEach(function (key) {
+      ['icon', 'title', 'shortTitle', 'description', 'category', 'price', 'stayUnit'].forEach(function (key) {
         if (ov[key] !== undefined && ov[key] !== '') entry[key] = ov[key];
       });
+      if (ov.roomCount != null && ov.roomCount !== '') {
+        var rooms = parseInt(ov.roomCount, 10);
+        if (rooms >= 1) entry.roomCount = rooms;
+      }
       if (Array.isArray(ov.features) && ov.features.length) entry.features = ov.features.slice();
       if (Object.keys(entry).length) map[svc.id] = entry;
     });

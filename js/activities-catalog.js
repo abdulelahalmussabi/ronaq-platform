@@ -299,13 +299,14 @@ window.MkenActivitiesCatalog = [
     defaultTheme: 'ocean',
     serviceIds: ['standard-room', 'deluxe-room', 'suite-room', 'family-suite', 'chalet-stay', 'long-stay-hotel'],
     booking: {
-      type: 'appointment',
+      type: 'stay',
       requiresAddress: false,
-      slotDuration: 60,
       ctaLabel: 'احجز غرفة',
       collectPartySize: true,
       partySizeLabel: 'عدد الضيوف',
       collectNights: true,
+      skipTimeSelection: true,
+      checkInTime: '15:00',
     },
   },
   {

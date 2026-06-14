@@ -61,6 +61,8 @@
       notes: (raw.notes || '').trim(),
       partySize: raw.partySize != null && raw.partySize !== '' ? Number(raw.partySize) : null,
       nights: raw.nights != null && raw.nights !== '' ? Number(raw.nights) : null,
+      stayUnit: raw.stayUnit || '',
+      stayBooking: raw.stayBooking === true,
       status: raw.status === 'cancelled' ? 'cancelled' : (raw.status === 'pending' ? 'pending' : 'confirmed'),
       remindersSent: Array.isArray(raw.remindersSent)
         ? raw.remindersSent.filter(function (h) { return typeof h === 'number' && h > 0; })
@@ -309,8 +311,58 @@
     return isWorkingDay(dateStr, booking);
   }
 
-  function getSlotsForDate(serviceId, dateStr, booking, appointments) {
+  function isStayBooking(booking) {
+    return !!(booking && (booking.type === 'stay' || booking.skipTimeSelection));
+  }
+
+  function getRoomCapacity(service, booking) {
+    var rooms = service && parseInt(service.roomCount, 10);
+    if (rooms >= 1) return rooms;
+    return Math.max(1, parseInt(booking && booking.maxPerSlot, 10) || 1);
+  }
+
+  function getStayDurationDays(amount, stayUnit) {
+    var n = Math.max(1, parseInt(amount, 10) || 1);
+    return stayUnit === 'month' ? n * 30 : n;
+  }
+
+  function bookingOccupiesDate(apt, dateStr) {
+    if (!apt || !apt.date) return false;
+    var start = parseDateISO(apt.date);
+    var days = getStayDurationDays(apt.nights, apt.stayUnit);
+    var end = new Date(start);
+    end.setDate(end.getDate() + days);
+    var day = parseDateISO(dateStr);
+    return day >= start && day < end;
+  }
+
+  function countBookingsOnDate(serviceId, dateStr, appointments) {
+    return (appointments || getActiveAppointments()).filter(function (a) {
+      return a.serviceId === serviceId && a.status === 'confirmed' && bookingOccupiesDate(a, dateStr);
+    }).length;
+  }
+
+  function isStayRangeAvailable(serviceId, checkIn, duration, service, booking, appointments) {
+    var capacity = getRoomCapacity(service, booking);
+    var days = getStayDurationDays(duration, service && service.stayUnit);
+    var i;
+    for (i = 0; i < days; i++) {
+      var day = new Date(parseDateISO(checkIn));
+      day.setDate(day.getDate() + i);
+      if (countBookingsOnDate(serviceId, formatDateISO(day), appointments) >= capacity) {
+        return false;
+      }
+    }
+    return true;
+  }
+
+  function getSlotsForDate(serviceId, dateStr, booking, appointments, service) {
     if (!isDateBookable(dateStr, booking)) return [];
+
+    if (isStayBooking(booking)) {
+      var checkIn = booking.checkInTime || '15:00';
+      return isStayRangeAvailable(serviceId, dateStr, 1, service, booking, appointments) ? [checkIn] : [];
+    }
 
     var startMin = timeToMinutes(booking.workingHours.start);
     var endMin = timeToMinutes(booking.workingHours.end);
@@ -331,24 +383,25 @@
       });
     }
 
+    var capacity = getRoomCapacity(service, booking);
     var booked = (appointments || getActiveAppointments()).filter(function (a) {
       return a.date === dateStr && a.serviceId === serviceId && a.status === 'confirmed';
     });
 
     return slots.filter(function (slot) {
       var count = booked.filter(function (a) { return a.time === slot; }).length;
-      return count < (booking.maxPerSlot || 1);
+      return count < capacity;
     });
   }
 
-  function getAvailableDates(serviceId, booking, appointments) {
+  function getAvailableDates(serviceId, booking, appointments, service) {
     var range = getDateRange(booking);
     var dates = [];
     var cursor = new Date(range.start);
 
     while (cursor <= range.end) {
       var dateStr = formatDateISO(cursor);
-      if (getSlotsForDate(serviceId, dateStr, booking, appointments).length) {
+      if (getSlotsForDate(serviceId, dateStr, booking, appointments, service).length) {
         dates.push(dateStr);
       }
       cursor.setDate(cursor.getDate() + 1);
@@ -371,6 +424,8 @@
       locationAddress: request.locationAddress || '',
       partySize: request.partySize != null && request.partySize !== '' ? Number(request.partySize) : null,
       nights: request.nights != null && request.nights !== '' ? Number(request.nights) : null,
+      stayUnit: request.stayUnit || '',
+      stayBooking: request.stayBooking === true,
       notes: request.notes || '',
       status: request.status || 'pending',
       remindersSent: [],
@@ -509,13 +564,13 @@
       'نذكّرك بموعدك ' + reminderLeadText(hoursBefore) + ':',
     ];
     if (activityTitle) lines.push('النشاط: ' + activityTitle);
-    lines.push(
-      'الخدمة: ' + serviceTitle,
-      'التاريخ: ' + formatDateArabic(appointment.date),
-      'الوقت: ' + formatTimeArabic(appointment.time)
-    );
+    lines.push('الخدمة: ' + serviceTitle);
+    lines.push((appointment.stayBooking ? 'تاريخ الوصول: ' : 'التاريخ: ') + formatDateArabic(appointment.date));
+    lines.push((appointment.stayBooking ? 'تسجيل الوصول: ' : 'الوقت: ') + formatTimeArabic(appointment.time));
     if (appointment.partySize) lines.push('عدد الضيوف: ' + appointment.partySize);
-    if (appointment.nights) lines.push('عدد الليالي: ' + appointment.nights);
+    if (appointment.nights) {
+      lines.push((appointment.stayUnit === 'month' ? 'عدد الأشهر: ' : 'عدد الليالي: ') + appointment.nights);
+    }
     if (appointment.locationAddress) lines.push('العنوان: ' + appointment.locationAddress);
     lines.push('━━━━━━━━━━━━━━', 'نتطلع لرؤيتك!', 'للاستفسار رد على هذه الرسالة.');
     return lines.join('\n');
@@ -533,16 +588,16 @@
       '━━━━━━━━━━━━━━',
     ];
     if (activityTitle) lines.push('النشاط: ' + activityTitle);
-    lines.push(
-      'الخدمة: ' + serviceTitle,
-      'التاريخ: ' + formatDateArabic(appointment.date),
-      'الوقت: ' + formatTimeArabic(appointment.time),
-      'الاسم: ' + appointment.customerName,
-      'الجوال: ' + appointment.phone
-    );
+    lines.push('الخدمة: ' + serviceTitle);
+    lines.push((appointment.stayBooking ? 'تاريخ الوصول: ' : 'التاريخ: ') + formatDateArabic(appointment.date));
+    lines.push((appointment.stayBooking ? 'تسجيل الوصول: ' : 'الوقت: ') + formatTimeArabic(appointment.time));
+    lines.push('الاسم: ' + appointment.customerName);
+    lines.push('الجوال: ' + appointment.phone);
     if (appointment.district) lines.push('الحي/المنطقة: ' + appointment.district);
     if (appointment.partySize) lines.push('عدد الأشخاص: ' + appointment.partySize);
-    if (appointment.nights) lines.push('عدد الليالي: ' + appointment.nights);
+    if (appointment.nights) {
+      lines.push((appointment.stayUnit === 'month' ? 'عدد الأشهر: ' : 'عدد الليالي: ') + appointment.nights);
+    }
     if (appointment.locationAddress) lines.push('العنوان: ' + appointment.locationAddress);
     if (appointment.notes) lines.push('ملاحظات: ' + appointment.notes);
     lines.push('━━━━━━━━━━━━━━', 'يُرجى تأكيد الموعد');
@@ -564,6 +619,9 @@
     getAppointmentsByDate: getAppointmentsByDate,
     getSlotsForDate: getSlotsForDate,
     getAvailableDates: getAvailableDates,
+    isStayBooking: isStayBooking,
+    isStayRangeAvailable: isStayRangeAvailable,
+    getRoomCapacity: getRoomCapacity,
     addAppointment: addAppointment,
     updateAppointment: updateAppointment,
     removeAppointment: removeAppointment,

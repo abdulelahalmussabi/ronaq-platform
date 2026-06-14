@@ -68,6 +68,11 @@
         priceLabel: ov.priceLabel || base.priceLabel || '',
         price: ov.price || base.price || '',
         features: ov.features && ov.features.length ? ov.features.slice() : (base.features || []).slice(),
+        stayUnit: ov.stayUnit || base.stayUnit || '',
+        roomCount: (function () {
+          var n = parseInt(ov.roomCount != null ? ov.roomCount : base.roomCount, 10);
+          return n >= 1 ? n : (base.roomCount >= 1 ? base.roomCount : 0);
+        })(),
       });
     },
 
@@ -105,6 +110,8 @@
         category: s.category,
         features: (s.features || []).slice(),
         price: s.price || '',
+        stayUnit: s.stayUnit || '',
+        roomCount: s.roomCount || '',
       };
     },
   };
