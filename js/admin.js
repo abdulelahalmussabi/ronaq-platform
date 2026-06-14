@@ -1117,9 +1117,18 @@
         showToast('أدخل اسم المنشأة', 'error');
         return;
       }
-      store.saveConfig(cfg);
-      showToast('تم الحفظ');
-      renderPanel();
+      saveBtn.disabled = true;
+      store.saveConfig(cfg)
+        .then(function () {
+          showToast('تم الحفظ');
+          renderPanel();
+        })
+        .catch(function (err) {
+          showToast('فشل الحفظ: ' + (err && err.message ? err.message : 'تحقق من الاتصال'), 'error');
+        })
+        .finally(function () {
+          saveBtn.disabled = false;
+        });
     });
   }
 

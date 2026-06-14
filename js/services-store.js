@@ -715,21 +715,21 @@
     _source = 'local';
     localStorage.setItem(STORAGE_KEY, JSON.stringify(_config));
     applyTheme(_config.theme);
-    
+
+    var promise = Promise.resolve(_config);
     if (window.MkenSupabaseDb && window.MkenSupabaseDb.isConfigured()) {
-      _ready = window.MkenSupabaseDb.saveConfig(_config, _currentTenantSlug)
+      promise = window.MkenSupabaseDb.saveConfig(_config, _currentTenantSlug)
         .then(function () {
           _source = 'supabase';
           return _config;
         })
         .catch(function (err) {
           console.error('Failed to save config to Supabase', err);
-          return _config;
+          throw err;
         });
-    } else {
-      _ready = Promise.resolve(_config);
     }
-    return _config;
+    _ready = promise;
+    return promise;
   }
 
   function renewSubscription(tenantSlug, months) {

@@ -112,6 +112,28 @@
   padding: 1rem 1.25rem;
   cursor: pointer;
   background: var(--color-surface);
+  position: relative;
+}
+
+.admin-activity__check {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.admin-activity--on .admin-service__toggle {
+  background: var(--color-primary);
+}
+
+.admin-activity--on .admin-service__toggle::after {
+  right: auto;
+  left: 3px;
 }
 
 .admin-activity__icon {
