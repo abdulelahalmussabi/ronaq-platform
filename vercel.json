@@ -5,6 +5,19 @@
       "schedule": "0 9 * * *"
     }
   ],
+  "rewrites": [
+    { "source": "/api/v1/push-subscribe", "destination": "/api/v1/push?action=subscribe" },
+    { "source": "/api/v1/push-notify", "destination": "/api/v1/push?action=notify" },
+    { "source": "/api/v1/push-test", "destination": "/api/v1/push?action=test" },
+    { "source": "/api/google-business/auth-url", "destination": "/api/google-business?action=auth-url" },
+    { "source": "/api/google-business/callback", "destination": "/api/google-business?action=callback" },
+    { "source": "/api/google-business/locations", "destination": "/api/google-business?action=locations" },
+    { "source": "/api/google-business/update-website", "destination": "/api/google-business?action=update-website" },
+    { "source": "/api/v1/auth/login-challenge", "destination": "/api/v1/auth/login?step=challenge" },
+    { "source": "/api/v1/auth/login-verify", "destination": "/api/v1/auth/login?step=verify" },
+    { "source": "/api/v1/auth/register-challenge", "destination": "/api/v1/auth/register?step=challenge" },
+    { "source": "/api/v1/auth/register-verify", "destination": "/api/v1/auth/register?step=verify" }
+  ],
   "headers": [
     {
       "source": "/api/(.*)",
