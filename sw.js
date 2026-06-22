@@ -3,7 +3,7 @@
  */
 'use strict';
 
-var CACHE_NAME = 'mken-platform-v7';
+var CACHE_NAME = 'mken-platform-v8';
 var SHELL = [
   './',
   './index.html',
