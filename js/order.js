@@ -321,85 +321,174 @@
     var block = document.getElementById('tailoringFormBlock');
     if (!block) return;
 
-    if (activeActivityId !== 'tailoring') {
+    if (activeActivityId !== 'tailoring' && activeActivityId !== 'military-tailoring') {
       block.hidden = true;
       block.innerHTML = '';
       return;
     }
 
     block.hidden = false;
-    block.innerHTML =
-      '<h3 style="margin-top: 0; margin-bottom: 15px; font-size: 1.1rem; color: var(--color-primary); border-bottom: 2px solid var(--color-border); padding-bottom: 8px;">خيارات تفصيل الثوب ومقاساتك</h3>' +
-      
-      '<div class="booking-field" style="margin-bottom: 12px;">' +
-      '  <label for="tailorCollar" style="font-weight: 600;">تصميم الياقة (القبة) *</label>' +
-      '  <select id="tailorCollar" class="admin-input" style="width: 100%; padding: 8px; border-radius: var(--radius); border: 1px solid var(--color-border);" required>' +
-      '    <option value="round_hard">ياقة قلاب قاسي (سعودي كلاسيك)</option>' +
-      '    <option value="round_soft">ياقة قلاب لين</option>' +
-      '    <option value="plain_neck">سادة بدون ياقة (كويتي)</option>' +
-      '  </select>' +
-      '</div>' +
 
-      '<div class="booking-field" style="margin-bottom: 12px;">' +
-      '  <label for="tailorCuff" style="font-weight: 600;">تصميم الأكمام *</label>' +
-      '  <select id="tailorCuff" class="admin-input" style="width: 100%; padding: 8px; border-radius: var(--radius); border: 1px solid var(--color-border);" required>' +
-      '    <option value="cuff_normal">كبك عادي بزرار واحد</option>' +
-      '    <option value="cuff_french">أكمام كبك فرنسي (للأزرار المنفصلة)</option>' +
-      '    <option value="cuff_plain">أكمام مفتوحة سادة</option>' +
-      '  </select>' +
-      '</div>' +
+    if (activeActivityId === 'military-tailoring') {
+      block.innerHTML =
+        '<h3 style="margin-top: 0; margin-bottom: 15px; font-size: 1.1rem; color: var(--color-primary); border-bottom: 2px solid var(--color-border); padding-bottom: 8px;">خيارات تفصيل البدلة العسكرية والتحقق الأمني</h3>' +
+        
+        '<div style="background: #fff8e1; border: 1px solid #ffe082; padding: 12px; border-radius: var(--radius); font-size: 0.85rem; color: #b78103; margin-bottom: 15px; display: flex; align-items: flex-start; gap: 8px; text-align: right; direction: rtl;">' +
+        '  <span>⚠️</span>' +
+        '  <div><strong>تنبيه أمني هام:</strong> تفصيل الزي العسكري محظور لغير المنتسبين للقطاعات العسكرية. يلزم إبراز الهوية العسكرية الأصلية للخياط لمطابقتها عند أخذ القياسات أو الاستلام.</div>' +
+        '</div>' +
 
-      '<div class="booking-field" style="margin-bottom: 12px;">' +
-      '  <label for="tailorPocket" style="font-weight: 600;">الجيب *</label>' +
-      '  <select id="tailorPocket" class="admin-input" style="width: 100%; padding: 8px; border-radius: var(--radius); border: 1px solid var(--color-border);" required>' +
-      '    <option value="hidden_side">جيب جانبي مخفي</option>' +
-      '    <option value="visible_chest">جيب أمامي على الصدر</option>' +
-      '    <option value="both">جيب صدري وجيوب جانبية</option>' +
-      '  </select>' +
-      '</div>' +
+        '<div class="booking-field" style="margin-bottom: 12px;">' +
+        '  <label for="milBranch" style="font-weight: 600;">القطاع العسكري *</label>' +
+        '  <select id="milBranch" class="admin-input" style="width: 100%; padding: 8px; border-radius: var(--radius); border: 1px solid var(--color-border);" required>' +
+        '    <option value="defense">وزارة الدفاع</option>' +
+        '    <option value="national_guard">وزارة الحرس الوطني</option>' +
+        '    <option value="interior">وزارة الداخلية (الأمن العام)</option>' +
+        '    <option value="state_security">رئاسة أمن الدولة</option>' +
+        '  </select>' +
+        '</div>' +
 
-      '<div class="booking-field" style="margin-bottom: 12px;">' +
-      '  <label for="tailorPlacket" style="font-weight: 600;">أزرار الثوب *</label>' +
-      '  <select id="tailorPlacket" class="admin-input" style="width: 100%; padding: 8px; border-radius: var(--radius); border: 1px solid var(--color-border);" required>' +
-      '    <option value="hidden_buttons">أزرار مخفية (مغطاة بالقماش)</option>' +
-      '    <option value="visible_buttons">أزرار ظاهرة</option>' +
-      '  </select>' +
-      '</div>' +
+        '<div class="booking-field" style="margin-bottom: 12px;">' +
+        '  <label for="milUniformType" style="font-weight: 600;">نوع البدلة العسكرية *</label>' +
+        '  <select id="milUniformType" class="admin-input" style="width: 100%; padding: 8px; border-radius: var(--radius); border: 1px solid var(--color-border);" required>' +
+        '    <option value="camo_field">ميدانية / مموه</option>' +
+        '    <option value="office">مكتبية / يومية</option>' +
+        '    <option value="ceremonial">مراسم / رسمية</option>' +
+        '  </select>' +
+        '</div>' +
 
-      '<div class="booking-field" style="margin-bottom: 12px;">' +
-      '  <label for="tailorMeasurementMethod" style="font-weight: 600;">طريقة تحديد القياسات *</label>' +
-      '  <select id="tailorMeasurementMethod" class="admin-input" style="width: 100%; padding: 8px; border-radius: var(--radius); border: 1px solid var(--color-border);" required>' +
-      '    <option value="home_visit">إرسال خياط للمنزل لأخذ مقاساتي (خدمة مجانية)</option>' +
-      '    <option value="manual">سأقوم بإدخال مقاساتي يدوياً الآن</option>' +
-      '    <option value="saved_profile">استخدام مقاساتي المحفوظة سابقاً</option>' +
-      '  </select>' +
-      '</div>' +
+        '<div class="booking-field" style="margin-bottom: 12px;">' +
+        '  <label for="milRank" style="font-weight: 600;">الرتبة العسكرية المطلوبة *</label>' +
+        '  <select id="milRank" class="admin-input" style="width: 100%; padding: 8px; border-radius: var(--radius); border: 1px solid var(--color-border);" required>' +
+        '    <option value="soldier">جندي إلى وكيل رقيب (أشرطة)</option>' +
+        '    <option value="sergeant">رقيب إلى رئيس رقباء (أشرطة ذهبية)</option>' +
+        '    <option value="officer_junior">ملازم إلى نقيب (نجوم)</option>' +
+        '    <option value="officer_senior">رائد إلى عقيد (تاج ونجوم)</option>' +
+        '    <option value="officer_general">عميد وأعلى (سيفين وتاج)</option>' +
+        '  </select>' +
+        '</div>' +
 
-      '<div id="manualMeasurementsFields" style="background: #f7f7f9; padding: 16px; border-radius: var(--radius); border: 1px solid var(--color-border); margin-bottom: 12px;" hidden>' +
-      '  <h4 style="margin: 0 0 12px 0; font-size: 0.95rem; color: var(--color-primary);">القياسات المطلوبة (بالسنتيمتر - سم)</h4>' +
-      '  <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">' +
-      '    <div>' +
-      '      <label style="font-size: 0.8rem; display:block; margin-bottom: 4px;">الطول الإجمالي</label>' +
-      '      <input type="number" id="measHeight" class="admin-input" placeholder="مثال: 145" style="width: 100%; padding: 6px;">' +
-      '    </div>' +
-      '    <div>' +
-      '      <label style="font-size: 0.8rem; display:block; margin-bottom: 4px;">عرض الكتف</label>' +
-      '      <input type="number" id="measShoulder" class="admin-input" placeholder="مثال: 46" style="width: 100%; padding: 6px;">' +
-      '    </div>' +
-      '    <div>' +
-      '      <label style="font-size: 0.8rem; display:block; margin-bottom: 4px;">محيط الصدر</label>' +
-      '      <input type="number" id="measChest" class="admin-input" placeholder="مثال: 58" style="width: 100%; padding: 6px;">' +
-      '    </div>' +
-      '    <div>' +
-      '      <label style="font-size: 0.8rem; display:block; margin-bottom: 4px;">طول الكم</label>' +
-      '      <input type="number" id="measSleeve" class="admin-input" placeholder="مثال: 62" style="width: 100%; padding: 6px;">' +
-      '    </div>' +
-      '    <div style="grid-column: span 2;">' +
-      '      <label style="font-size: 0.8rem; display:block; margin-bottom: 4px;">محيط الرقبة</label>' +
-      '      <input type="number" id="measNeck" class="admin-input" placeholder="مثال: 41" style="width: 100%; padding: 6px;">' +
-      '    </div>' +
-      '  </div>' +
-      '</div>';
+        '<div class="booking-field" style="margin-bottom: 12px;">' +
+        '  <label for="milIdNumber" style="font-weight: 600;">رقم الهوية أو الرقم العسكري (للمطابقة أمنياً) *</label>' +
+        '  <input type="text" id="milIdNumber" class="admin-input" placeholder="أدخل الرقم العسكري" style="width: 100%; padding: 8px; border-radius: var(--radius); border: 1px solid var(--color-border);" required>' +
+        '</div>' +
+
+        '<div class="booking-field" style="margin-bottom: 12px;">' +
+        '  <label for="tailorMeasurementMethod" style="font-weight: 600;">طريقة تحديد القياسات *</label>' +
+        '  <select id="tailorMeasurementMethod" class="admin-input" style="width: 100%; padding: 8px; border-radius: var(--radius); border: 1px solid var(--color-border);" required>' +
+        '    <option value="home_visit">إرسال خياط للمنزل لأخذ مقاساتي (خدمة مجانية)</option>' +
+        '    <option value="manual">سأقوم بإدخال مقاساتي يدوياً الآن</option>' +
+        '    <option value="saved_profile">استخدام مقاساتي المحفوظة سابقاً</option>' +
+        '  </select>' +
+        '</div>' +
+
+        '<div id="manualMeasurementsFields" style="background: #f7f7f9; padding: 16px; border-radius: var(--radius); border: 1px solid var(--color-border); margin-bottom: 12px;" hidden>' +
+        '  <h4 style="margin: 0 0 12px 0; font-size: 0.95rem; color: var(--color-primary);">القياسات المطلوبة للبدلة العسكرية (سم)</h4>' +
+        '  <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">' +
+        '    <div>' +
+        '      <label style="font-size: 0.8rem; display:block; margin-bottom: 4px;">طول السترة/القميص</label>' +
+        '      <input type="number" id="measHeight" class="admin-input" placeholder="مثال: 75" style="width: 100%; padding: 6px;">' +
+        '    </div>' +
+        '    <div>' +
+        '      <label style="font-size: 0.8rem; display:block; margin-bottom: 4px;">عرض الكتف</label>' +
+        '      <input type="number" id="measShoulder" class="admin-input" placeholder="مثال: 48" style="width: 100%; padding: 6px;">' +
+        '    </div>' +
+        '    <div>' +
+        '      <label style="font-size: 0.8rem; display:block; margin-bottom: 4px;">محيط الصدر</label>' +
+        '      <input type="number" id="measChest" class="admin-input" placeholder="مثال: 104" style="width: 100%; padding: 6px;">' +
+        '    </div>' +
+        '    <div>' +
+        '      <label style="font-size: 0.8rem; display:block; margin-bottom: 4px;">طول الكم</label>' +
+        '      <input type="number" id="measSleeve" class="admin-input" placeholder="مثال: 64" style="width: 100%; padding: 6px;">' +
+        '    </div>' +
+        '    <div>' +
+        '      <label style="font-size: 0.8rem; display:block; margin-bottom: 4px;">طول البنطلون</label>' +
+        '      <input type="number" id="measTrouserLength" class="admin-input" placeholder="مثال: 102" style="width: 100%; padding: 6px;">' +
+        '    </div>' +
+        '    <div>' +
+        '      <label style="font-size: 0.8rem; display:block; margin-bottom: 4px;">محيط الخصر (الوسط)</label>' +
+        '      <input type="number" id="measWaist" class="admin-input" placeholder="مثال: 92" style="width: 100%; padding: 6px;">' +
+        '    </div>' +
+        '    <div style="grid-column: span 2;">' +
+        '      <label style="font-size: 0.8rem; display:block; margin-bottom: 4px;">محيط الرقبة</label>' +
+        '      <input type="number" id="measNeck" class="admin-input" placeholder="مثال: 43" style="width: 100%; padding: 6px;">' +
+        '    </div>' +
+        '  </div>' +
+        '</div>';
+    } else {
+      block.innerHTML =
+        '<h3 style="margin-top: 0; margin-bottom: 15px; font-size: 1.1rem; color: var(--color-primary); border-bottom: 2px solid var(--color-border); padding-bottom: 8px;">خيارات تفصيل الثوب ومقاساتك</h3>' +
+        
+        '<div class="booking-field" style="margin-bottom: 12px;">' +
+        '  <label for="tailorCollar" style="font-weight: 600;">تصميم الياقة (القبة) *</label>' +
+        '  <select id="tailorCollar" class="admin-input" style="width: 100%; padding: 8px; border-radius: var(--radius); border: 1px solid var(--color-border);" required>' +
+        '    <option value="round_hard">ياقة قلاب قاسي (سعودي كلاسيك)</option>' +
+        '    <option value="round_soft">ياقة قلاب لين</option>' +
+        '    <option value="plain_neck">سادة بدون ياقة (كويتي)</option>' +
+        '  </select>' +
+        '</div>' +
+
+        '<div class="booking-field" style="margin-bottom: 12px;">' +
+        '  <label for="tailorCuff" style="font-weight: 600;">تصميم الأكمام *</label>' +
+        '  <select id="tailorCuff" class="admin-input" style="width: 100%; padding: 8px; border-radius: var(--radius); border: 1px solid var(--color-border);" required>' +
+        '    <option value="cuff_normal">كبك عادي بزرار واحد</option>' +
+        '    <option value="cuff_french">أكمام كبك فرنسي (للأزرار المنفصلة)</option>' +
+        '    <option value="cuff_plain">أكمام مفتوحة سادة</option>' +
+        '  </select>' +
+        '</div>' +
+
+        '<div class="booking-field" style="margin-bottom: 12px;">' +
+        '  <label for="tailorPocket" style="font-weight: 600;">الجيب *</label>' +
+        '  <select id="tailorPocket" class="admin-input" style="width: 100%; padding: 8px; border-radius: var(--radius); border: 1px solid var(--color-border);" required>' +
+        '    <option value="hidden_side">جيب جانبي مخفي</option>' +
+        '    <option value="visible_chest">جيب أمامي على الصدر</option>' +
+        '    <option value="both">جيب صدري وجيوب جانبية</option>' +
+        '  </select>' +
+        '</div>' +
+
+        '<div class="booking-field" style="margin-bottom: 12px;">' +
+        '  <label for="tailorPlacket" style="font-weight: 600;">أزرار الثوب *</label>' +
+        '  <select id="tailorPlacket" class="admin-input" style="width: 100%; padding: 8px; border-radius: var(--radius); border: 1px solid var(--color-border);" required>' +
+        '    <option value="hidden_buttons">أزرار مخفية (مغطاة بالقماش)</option>' +
+        '    <option value="visible_buttons">أزرار ظاهرة</option>' +
+        '  </select>' +
+        '</div>' +
+
+        '<div class="booking-field" style="margin-bottom: 12px;">' +
+        '  <label for="tailorMeasurementMethod" style="font-weight: 600;">طريقة تحديد القياسات *</label>' +
+        '  <select id="tailorMeasurementMethod" class="admin-input" style="width: 100%; padding: 8px; border-radius: var(--radius); border: 1px solid var(--color-border);" required>' +
+        '    <option value="home_visit">إرسال خياط للمنزل لأخذ مقاساتي (خدمة مجانية)</option>' +
+        '    <option value="manual">سأقوم بإدخال مقاساتي يدوياً الآن</option>' +
+        '    <option value="saved_profile">استخدام مقاساتي المحفوظة سابقاً</option>' +
+        '  </select>' +
+        '</div>' +
+
+        '<div id="manualMeasurementsFields" style="background: #f7f7f9; padding: 16px; border-radius: var(--radius); border: 1px solid var(--color-border); margin-bottom: 12px;" hidden>' +
+        '  <h4 style="margin: 0 0 12px 0; font-size: 0.95rem; color: var(--color-primary);">القياسات المطلوبة (بالسنتيمتر - سم)</h4>' +
+        '  <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">' +
+        '    <div>' +
+        '      <label style="font-size: 0.8rem; display:block; margin-bottom: 4px;">الطول الإجمالي</label>' +
+        '      <input type="number" id="measHeight" class="admin-input" placeholder="مثال: 145" style="width: 100%; padding: 6px;">' +
+        '    </div>' +
+        '    <div>' +
+        '      <label style="font-size: 0.8rem; display:block; margin-bottom: 4px;">عرض الكتف</label>' +
+        '      <input type="number" id="measShoulder" class="admin-input" placeholder="مثال: 46" style="width: 100%; padding: 6px;">' +
+        '    </div>' +
+        '    <div>' +
+        '      <label style="font-size: 0.8rem; display:block; margin-bottom: 4px;">محيط الصدر</label>' +
+        '      <input type="number" id="measChest" class="admin-input" placeholder="مثال: 58" style="width: 100%; padding: 6px;">' +
+        '    </div>' +
+        '    <div>' +
+        '      <label style="font-size: 0.8rem; display:block; margin-bottom: 4px;">طول الكم</label>' +
+        '      <input type="number" id="measSleeve" class="admin-input" placeholder="مثال: 62" style="width: 100%; padding: 6px;">' +
+        '    </div>' +
+        '    <div style="grid-column: span 2;">' +
+        '      <label style="font-size: 0.8rem; display:block; margin-bottom: 4px;">محيط الرقبة</label>' +
+        '      <input type="number" id="measNeck" class="admin-input" placeholder="مثال: 41" style="width: 100%; padding: 6px;">' +
+        '    </div>' +
+        '  </div>' +
+        '</div>';
+    }
 
     var methodSelect = document.getElementById('tailorMeasurementMethod');
     var manualFields = document.getElementById('manualMeasurementsFields');
@@ -612,7 +701,35 @@
       notes: notes,
     };
 
-    if (activeActivityId === 'tailoring') {
+    if (activeActivityId === 'military-tailoring') {
+      var milBranchVal = document.getElementById('milBranch').value;
+      var milUniformTypeVal = document.getElementById('milUniformType').value;
+      var milRankVal = document.getElementById('milRank').value;
+      var milIdNumberVal = document.getElementById('milIdNumber').value;
+      var methodVal = document.getElementById('tailorMeasurementMethod').value;
+      
+      var measurementsVal = null;
+      if (methodVal === 'manual') {
+        measurementsVal = {
+          jacketLength: parseFloat(document.getElementById('measHeight').value) || 0,
+          shoulder: parseFloat(document.getElementById('measShoulder').value) || 0,
+          chest: parseFloat(document.getElementById('measChest').value) || 0,
+          sleeve: parseFloat(document.getElementById('measSleeve').value) || 0,
+          trouserLength: parseFloat(document.getElementById('measTrouserLength').value) || 0,
+          waist: parseFloat(document.getElementById('measWaist').value) || 0,
+          neck: parseFloat(document.getElementById('measNeck').value) || 0
+        };
+      }
+
+      payload.tailoringDetails = {
+        militaryBranch: milBranchVal,
+        militaryUniformType: milUniformTypeVal,
+        militaryRank: milRankVal,
+        militaryIdNumber: milIdNumberVal,
+        measurementMethod: methodVal,
+        measurements: measurementsVal
+      };
+    } else if (activeActivityId === 'tailoring') {
       var collarVal = document.getElementById('tailorCollar').value;
       var cuffVal = document.getElementById('tailorCuff').value;
       var pocketVal = document.getElementById('tailorPocket').value;

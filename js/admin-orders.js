@@ -123,30 +123,8 @@
       }
       var waLink = 'https://wa.me/' + phoneStr + '?text=' + encodeURIComponent(waMsg);
 
-      return (
-        '<div class="admin-appointment-card" data-order-id="' + ord.id + '" style="border-right: 4px solid ' + statusColor + '; padding: 16px; background: #fff; margin-bottom: 12px; border-radius: var(--radius); border: 1px solid var(--color-border); border-right-width: 5px;">' +
-        '  <div style="display: flex; justify-content: space-between; align-items: start; flex-wrap: wrap; gap: 8px;">' +
-        '    <div>' +
-        '      <span class="badge" style="background: var(--terracotta-50); color: var(--color-primary); margin-bottom: 8px;">' + esc(ord.activityTitle || ord.activityId) + '</span>' +
-        '      <h4 style="margin: 4px 0 8px 0; font-size: 1.05rem; color: var(--terracotta-900);">' + esc(ord.customerName) + '</h4>' +
-        '      <p style="margin: 2px 0; font-size: 0.85rem; color: var(--color-text-muted);">📞 ' + esc(ord.phone) + '</p>' +
-        '      ' + (ord.district ? '<p style="margin: 2px 0; font-size: 0.85rem; color: var(--color-text-muted);">📍 الحي: ' + esc(ord.district) + '</p>' : '') +
-        '      ' + (ord.locationAddress ? '<p style="margin: 2px 0; font-size: 0.85rem; color: var(--color-text-muted);">🏠 العنوان: ' + esc(ord.locationAddress) + '</p>' : '') +
-        '      ' + (ord.notes ? '<p style="margin: 6px 0; font-size: 0.85rem; padding: 6px; background: #fdf6f0; border-radius: 4px; color: #8a6d3b;">📝 ملاحظات: ' + esc(ord.notes) + '</p>' : '') +
-        '      <div style="margin-top: 10px;">' +
-        '        <strong style="font-size: 0.88rem; display: block; margin-bottom: 4px; color: var(--terracotta-800);">المنتجات المطلوبة:</strong>' +
-        '        <ul style="padding-right: 16px; margin: 0; font-size: 0.88rem; line-height: 1.5;">' + itemsHtml + '</ul>' +
-        '      </div>' +
-        '    </div>' +
-        '    <div style="text-align: left; display: flex; flex-direction: column; gap: 8px; align-items: flex-end;">' +
-        '      <span style="font-size: 0.75rem; color: var(--color-text-muted);">' + formatDate(ord.createdAt) + '</span>' +
-        '      <div style="display: flex; gap: 6px; margin-top: 4px;">' +
-        '        <span class="badge" style="background: ' + statusColor + '20; color: ' + statusColor + '; font-weight: bold;">الحالة: ' + statusText + '</span>' +
-        '        <span class="badge" style="background: ' + payColor + '20; color: ' + payColor + '; font-weight: bold;">الدفع: ' + payText + '</span>' +
-        '      </div>' +
-        '      ' + (ord.paymentId ? '<span style="font-size: 0.75rem; color: var(--color-text-muted); display:block;">رقم العملية: ' + esc(ord.paymentId) + ' (' + esc(ord.paymentMethod) + ')</span>' : '') +
-        '      ' + (ord.paymentAmount ? '<span style="font-size: 0.82rem; font-weight: bold; color: var(--color-primary);">المبلغ: ' + ord.paymentAmount + ' ريال</span>' : '') +
-        '      var isTailoring = ord.activityId === 'tailoring';
+
+      var isTailoring = ord.activityId === 'tailoring' || ord.activityId === 'military-tailoring';
       var statusSelectHtml = '';
       if (isTailoring) {
         statusSelectHtml = 
@@ -169,10 +147,68 @@
           '        </select>';
       }
 
+      var tailoringDetailsHtml = '';
+      if (ord.tailoringDetails) {
+        var td = ord.tailoringDetails;
+        if (ord.activityId === 'military-tailoring') {
+          var branchNameAr = '';
+          if (td.militaryBranch === 'defense') branchNameAr = 'وزارة الدفاع';
+          else if (td.militaryBranch === 'national_guard') branchNameAr = 'وزارة الحرس الوطني';
+          else if (td.militaryBranch === 'interior') branchNameAr = 'وزارة الداخلية';
+          else if (td.militaryBranch === 'state_security') branchNameAr = 'رئاسة أمن الدولة';
+
+          var rankNameAr = '';
+          if (td.militaryRank === 'soldier') rankNameAr = 'جندي إلى وكيل رقيب';
+          else if (td.militaryRank === 'sergeant') rankNameAr = 'رقيب إلى رئيس رقباء';
+          else if (td.militaryRank === 'officer_junior') rankNameAr = 'ملازم إلى نقيب';
+          else if (td.militaryRank === 'officer_senior') rankNameAr = 'رائد إلى عقيد';
+          else if (td.militaryRank === 'officer_general') rankNameAr = 'عميد وأعلى';
+
+          var typeNameAr = '';
+          if (td.militaryUniformType === 'camo_field') typeNameAr = 'ميدانية / مموه';
+          else if (td.militaryUniformType === 'office') typeNameAr = 'مكتبية / يومية';
+          else if (td.militaryUniformType === 'ceremonial') typeNameAr = 'مراسم / رسمية';
+
+          var isVerified = ord.militaryVerified || false;
+          var verifBadge = isVerified 
+            ? '<span class="badge" style="background: #2e7d3220; color: #2e7d32; font-weight: bold; margin-top: 6px;">✓ تم مطابقة الهوية العسكرية</span>'
+            : '<span class="badge" style="background: #c0392b20; color: #c0392b; font-weight: bold; margin-top: 6px;">⚠️ بانتظار مطابقة الهوية العسكرية</span>';
+
+          tailoringDetailsHtml = 
+            '<div style="margin-top: 10px; padding: 10px; background: #f0f4c320; border: 1px solid #d4e15780; border-radius: 6px; font-size: 0.85rem; text-align: right; width: 100%; box-sizing: border-box;">' +
+            '  <strong style="color: #558b2f; display: block; margin-bottom: 4px;">🎯 تفاصيل البدلة العسكرية ومطابقة الهوية:</strong>' +
+            '  <div>القطاع: ' + esc(branchNameAr) + ' | النوع: ' + esc(typeNameAr) + '</div>' +
+            '  <div>الرتبة: ' + esc(rankNameAr) + ' | الرقم العسكري: <code>' + esc(td.militaryIdNumber) + '</code></div>' +
+            '  <div style="margin-top: 6px; display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">' +
+                 verifBadge +
+                 (!isVerified ? '<button type="button" class="btn btn--sm" data-action="verify-military" style="padding: 2px 8px; font-size: 0.75rem; background: #558b2f; color: #fff; border:none; border-radius:3px; cursor:pointer; font-weight: bold;">تأكيد مطابقة الهوية العسكرية</button>' : '') +
+            '  </div>' +
+            (td.measurements ? 
+            '  <div style="margin-top: 8px; font-size: 0.8rem; color: #555; border-top: 1px dashed #d4e15780; padding-top: 6px;">' +
+            '    <strong>المقاسات:</strong> السترة: ' + td.measurements.jacketLength + 'سم | الكتف: ' + td.measurements.shoulder + 'سم | الصدر: ' + td.measurements.chest + 'سم | الكم: ' + td.measurements.sleeve + 'سم | البنطلون: ' + td.measurements.trouserLength + 'سم | الخصر: ' + td.measurements.waist + 'سم | الرقبة: ' + td.measurements.neck + 'سم' +
+            '  </div>' : '') +
+            '</div>';
+        } else {
+          var collarName = td.collar === 'round_hard' ? 'سعودي كلاسيك' : (td.collar === 'round_soft' ? 'قلاب لين' : 'كويتي سادة');
+          var cuffName = td.cuff === 'cuff_normal' ? 'عادي بزرار' : (td.cuff === 'cuff_french' ? 'فرنسي كبك' : 'سادة مفتوح');
+          var pocketName = td.pocket === 'hidden_side' ? 'جانبي مخفي' : (td.pocket === 'visible_chest' ? 'أمامي صدر' : 'جانبي وصدري');
+          var placketName = td.placket === 'hidden_buttons' ? 'مخفية مغطاة' : 'ظاهرة';
+          tailoringDetailsHtml = 
+            '<div style="margin-top: 10px; padding: 10px; background: #e3f2fd20; border: 1px solid #90caf980; border-radius: 6px; font-size: 0.85rem; text-align: right; width: 100%; box-sizing: border-box;">' +
+            '  <strong style="color: #1565c0; display: block; margin-bottom: 4px;">تفاصيل تصميم الثوب:</strong>' +
+            '  <div>الياقة: ' + esc(collarName) + ' | الأكمام: ' + esc(cuffName) + ' | الجيب: ' + esc(pocketName) + ' | الأزرار: ' + esc(placketName) + '</div>' +
+            (td.measurements ? 
+            '  <div style="margin-top: 8px; font-size: 0.8rem; color: #555; border-top: 1px dashed #90caf980; padding-top: 6px;">' +
+            '    <strong>المقاسات:</strong> الطول: ' + td.measurements.height + 'سم | الكتف: ' + td.measurements.shoulder + 'سم | الصدر: ' + td.measurements.chest + 'سم | الكم: ' + td.measurements.sleeve + 'سم | الرقبة: ' + td.measurements.neck + 'سم' +
+            '  </div>' : '') +
+            '</div>';
+        }
+      }
+
       return (
         '<div class="admin-appointment-card" data-order-id="' + ord.id + '" style="border-right: 4px solid ' + statusColor + '; padding: 16px; background: #fff; margin-bottom: 12px; border-radius: var(--radius); border: 1px solid var(--color-border); border-right-width: 5px;">' +
         '  <div style="display: flex; justify-content: space-between; align-items: start; flex-wrap: wrap; gap: 8px;">' +
-        '    <div>' +
+        '    <div style="flex: 1; min-width: 280px;">' +
         '      <span class="badge" style="background: var(--terracotta-50); color: var(--color-primary); margin-bottom: 8px;">' + esc(ord.activityTitle || ord.activityId) + '</span>' +
         '      <h4 style="margin: 4px 0 8px 0; font-size: 1.05rem; color: var(--terracotta-900);">' + esc(ord.customerName) + '</h4>' +
         '      <p style="margin: 2px 0; font-size: 0.85rem; color: var(--color-text-muted);">📞 ' + esc(ord.phone) + '</p>' +
@@ -183,6 +219,7 @@
         '        <strong style="font-size: 0.88rem; display: block; margin-bottom: 4px; color: var(--terracotta-800);">المنتجات المطلوبة:</strong>' +
         '        <ul style="padding-right: 16px; margin: 0; font-size: 0.88rem; line-height: 1.5;">' + itemsHtml + '</ul>' +
         '      </div>' +
+        '      ' + tailoringDetailsHtml +
         '    </div>' +
         '    <div style="text-align: left; display: flex; flex-direction: column; gap: 8px; align-items: flex-end;">' +
         '      <span style="font-size: 0.75rem; color: var(--color-text-muted);">' + formatDate(ord.createdAt) + '</span>' +
@@ -235,6 +272,13 @@
           }
         });
       }
+
+      var verifyMilBtn = card.querySelector('[data-action="verify-military"]');
+      if (verifyMilBtn) {
+        verifyMilBtn.addEventListener('click', function () {
+          verifyMilitaryOrder(id);
+        });
+      }
     });
   }
 
@@ -243,30 +287,42 @@
     
     // 1. Calculate fabric consumed
     var fabricItem = (order.items || []).find(function (item) {
-      return item.serviceId.indexOf('fabric-') === 0;
+      return item.serviceId.indexOf('fabric-') === 0 || item.serviceId.indexOf('uniform-') === 0;
     });
     if (!fabricItem) return;
 
     var metersUsed = 3.5;
-    if (order.tailoringDetails && order.tailoringDetails.measurements && order.tailoringDetails.measurements.height) {
-      var h = order.tailoringDetails.measurements.height;
-      metersUsed = parseFloat(((h * 2.3) / 100 + 0.2).toFixed(1));
-      if (isNaN(metersUsed) || metersUsed < 1) metersUsed = 3.5;
+    if (order.tailoringDetails && order.tailoringDetails.measurements) {
+      if (order.activityId === 'military-tailoring') {
+        var jacket = order.tailoringDetails.measurements.jacketLength || 75;
+        var trouser = order.tailoringDetails.measurements.trouserLength || 102;
+        metersUsed = parseFloat(((jacket + trouser) * 2.1 / 100 + 0.3).toFixed(1));
+        if (isNaN(metersUsed) || metersUsed < 1) metersUsed = 4.0;
+      } else if (order.tailoringDetails.measurements.height) {
+        var h = order.tailoringDetails.measurements.height;
+        metersUsed = parseFloat(((h * 2.3) / 100 + 0.2).toFixed(1));
+        if (isNaN(metersUsed) || metersUsed < 1) metersUsed = 3.5;
+      }
     }
 
     var deductions = [
-      { id: fabricItem.serviceId, qty: metersUsed, notes: 'قص قماش للثوب' }
+      { id: fabricItem.serviceId, qty: metersUsed, notes: order.activityId === 'military-tailoring' ? 'قص قماش للبدلة العسكرية' : 'قص قماش للثوب' }
     ];
 
     var design = order.tailoringDetails || {};
     var placket = design.placket || '';
 
-    deductions.push({ name: 'أزرار ثياب بيضاء', searchKeyword: 'زرار', qty: 5, notes: 'أزرار للثوب' });
-    deductions.push({ name: 'حشوة ياقة لاصقة', searchKeyword: 'حشوة', qty: 0.5, notes: 'حشوة ياقة وجبزور' });
-    deductions.push({ name: 'كرتون تغليف فاخر', searchKeyword: 'كرتون', qty: 1, notes: 'صندوق التغليف' });
-
-    if (placket === 'hidden_buttons') {
-      deductions.push({ name: 'سحاب مخفي ثياب', searchKeyword: 'سحاب', qty: 1, notes: 'سحاب مخفي للصدر' });
+    if (order.activityId === 'military-tailoring') {
+      deductions.push({ name: 'أزرار عسكرية', searchKeyword: 'زرار', qty: 8, notes: 'أزرار للبدلة العسكرية' });
+      deductions.push({ name: 'حشوة ياقة عسكرية', searchKeyword: 'حشوة', qty: 1.0, notes: 'حشوة وجبزور للبدلة' });
+      deductions.push({ name: 'كرتون تغليف فاخر', searchKeyword: 'كرتون', qty: 1, notes: 'صندوق التغليف للبدلة' });
+    } else {
+      deductions.push({ name: 'أزرار ثياب بيضاء', searchKeyword: 'زرار', qty: 5, notes: 'أزرار للثوب' });
+      deductions.push({ name: 'حشوة ياقة لاصقة', searchKeyword: 'حشوة', qty: 0.5, notes: 'حشوة ياقة وجبزور' });
+      deductions.push({ name: 'كرتون تغليف فاخر', searchKeyword: 'كرتون', qty: 1, notes: 'صندوق التغليف' });
+      if (placket === 'hidden_buttons') {
+        deductions.push({ name: 'سحاب مخفي ثياب', searchKeyword: 'سحاب', qty: 1, notes: 'سحاب مخفي للصدر' });
+      }
     }
 
     if (window.MkenSupabaseDb && window.MkenSupabaseDb.isConfigured()) {
@@ -341,7 +397,24 @@
     }
   }
 
+  function verifyMilitaryOrder(id) {
+    var updated = orderStore.updateOrder(id, { militaryVerified: true });
+    if (updated) {
+      toast('تم التحقق من الهوية العسكرية وتأكيدها بنجاح');
+      loadOrders();
+    } else {
+      toast('فشل تأكيد التحقق', 'error');
+    }
+  }
+
   function updateOrderStatus(id, status) {
+    var ord = _orders.find(function (x) { return x.id === id; });
+    if (ord && ord.activityId === 'military-tailoring' && !ord.militaryVerified && (status === 'cutting' || status === 'stitching' || status === 'ironing_packaging' || status === 'ready' || status === 'completed')) {
+      toast('لا يمكن البدء بالتفصيل أو تعديل الحالة قبل التحقق من الهوية العسكرية ومطابقتها!', 'error');
+      loadOrders();
+      return;
+    }
+
     var updated = orderStore.updateOrder(id, { status: status });
     if (updated) {
       toast('تم تحديث حالة الطلب بنجاح');
@@ -363,7 +436,7 @@
       }
 
       // Auto inventory deduction when status becomes "cutting"
-      if (status === 'cutting' && updated.activityId === 'tailoring') {
+      if (status === 'cutting' && (updated.activityId === 'tailoring' || updated.activityId === 'military-tailoring')) {
         deductTailoringInventory(updated);
         // Refresh inventory if active in admin dashboard
         if (window.MkenAdminInventory) {

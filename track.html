@@ -386,11 +386,24 @@
         document.getElementById('orderDateLabel').textContent = isNaN(d.getTime()) ? order.createdAt : d.toLocaleDateString('ar-SA');
         
         var servicesText = (order.items || []).map(function (i) { return i.serviceTitle; }).join('، ');
-        document.getElementById('fabricLabel').textContent = servicesText || 'ثوب مخصص';
+        document.getElementById('fabricLabel').textContent = servicesText || 'بدلة مخصصة';
+
+        var currentStages = STAGES;
+        if (order.activityId === 'military-tailoring') {
+          currentStages = [
+            { id: 'pending', title: 'طلب جديد', desc: 'تم استلام طلب البدلة وبانتظار المراجعة والاعتماد' },
+            { id: 'measurements_pending', title: 'مطابقة الهوية والمقاسات', desc: 'مطابقة الهوية العسكرية الأصلية وأخذ مقاسات البدلة 🪪' },
+            { id: 'cutting', title: 'قص البدلة', desc: 'تم اعتماد الهوية والمقاسات وبدء قص أمتار بدلتك ✂️' },
+            { id: 'stitching', title: 'الخياطة والتطريز', desc: 'تجهيز البدلة وتطريز الرتب والشعارات الرسمية 🪡' },
+            { id: 'ironing_packaging', title: 'الكي والتجهيز', desc: 'اللمسات النهائية ومراقبة الجودة والكي وتجهيز البدلة 🌟' },
+            { id: 'ready', title: 'جاهز للتسليم', desc: 'البدلة جاهزة بالكامل وبانتظار مطابقة الهوية والتسليم 📦' },
+            { id: 'completed', title: 'تم التسليم', desc: 'ملبوس العافية! تم استلام البدلة العسكرية بنجاح' }
+          ];
+        }
 
         // Set status badge
         var currentStatus = order.status || 'pending';
-        var activeIndex = STAGES.findIndex(function (s) { return s.id === currentStatus; });
+        var activeIndex = currentStages.findIndex(function (s) { return s.id === currentStatus; });
         if (activeIndex === -1) {
           // If status is "confirmed", we treat it as ready, or cutting
           if (currentStatus === 'confirmed') activeIndex = 2; // Cutting
@@ -403,13 +416,13 @@
           badgeEl.style.background = '#fce8e6';
           badgeEl.style.color = '#c5221f';
         } else {
-          var currentStageName = STAGES[activeIndex >= 0 ? activeIndex : 0].title;
+          var currentStageName = currentStages[activeIndex >= 0 ? activeIndex : 0].title;
           badgeEl.textContent = currentStageName;
         }
 
         // Render Timeline
         var timelineEl = document.getElementById('trackingTimeline');
-        timelineEl.innerHTML = STAGES.map(function (stage, idx) {
+        timelineEl.innerHTML = currentStages.map(function (stage, idx) {
           var cls = 'timeline-item';
           var iconHtml = '○';
           
@@ -445,27 +458,63 @@
           var specsGrid = document.getElementById('specsGrid');
           specsCard.hidden = false;
 
-          var collarMap = { round_hard: 'ياقة قلاب قاسي (سعودي)', round_soft: 'ياقة قلاب لين', plain_neck: 'سادة بدون ياقة (كويتي)' };
-          var cuffMap = { cuff_normal: 'سحاب/زرار عادي', cuff_french: 'أكمام كبك فرنسي', cuff_plain: 'أكمام مفتوحة سادة' };
-          var pocketMap = { hidden_side: 'جيب جانبي مخفي', visible_chest: 'جيب صدري', both: 'جيب صدري وجانبي' };
-          var placketMap = { hidden_buttons: 'أزرار مخفية', visible_buttons: 'أزرار ظاهرة كلاسيكية' };
-          var methodMap = { home_visit: 'زيارة خياط للمنزل 🏠', manual: 'إدخال يدوي 📏', saved_profile: 'المقاسات المحفوظة 📂' };
+          var titleEl = specsCard.querySelector('h3');
+          if (titleEl) {
+            titleEl.textContent = order.activityId === 'military-tailoring' ? 'مواصفات البدلة العسكرية ومطابقة الهوية' : 'تفاصيل ومواصفات الثوب';
+          }
 
-          var html = 
-            '<div class="spec-line"><span>الياقة:</span><span>' + esc(collarMap[td.collar] || td.collar) + '</span></div>' +
-            '<div class="spec-line"><span>الأكمام:</span><span>' + esc(cuffMap[td.cuff] || td.cuff) + '</span></div>' +
-            '<div class="spec-line"><span>الجيب:</span><span>' + esc(pocketMap[td.pocket] || td.pocket) + '</span></div>' +
-            '<div class="spec-line"><span>الأزرار:</span><span>' + esc(placketMap[td.placket] || td.placket) + '</span></div>' +
-            '<div class="spec-line" style="grid-column: span 2;"><span>طريقة أخذ القياسات:</span><span>' + esc(methodMap[td.measurementMethod] || td.measurementMethod) + '</span></div>';
+          var html = '';
+          if (order.activityId === 'military-tailoring') {
+            var branchMap = { defense: 'وزارة الدفاع', national_guard: 'وزارة الحرس الوطني', interior: 'وزارة الداخلية', state_security: 'رئاسة أمن الدولة' };
+            var typeMap = { camo_field: 'ميدانية / مموه', office: 'مكتبية / يومية', ceremonial: 'مراسم / رسمية' };
+            var rankMap = { soldier: 'جندي إلى وكيل رقيب', sergeant: 'رقيب إلى رئيس رقباء', officer_junior: 'ملازم إلى نقيب', officer_senior: 'رائد إلى عقيد', officer_general: 'عميد وأعلى' };
+            var methodMap = { home_visit: 'زيارة خياط للمنزل 🏠', manual: 'إدخال يدوي 📏', saved_profile: 'المقاسات المحفوظة 📂' };
 
-          if (td.measurements) {
-            html += 
-              '<div class="spec-line" style="grid-column: span 2; margin-top: 10px; border-bottom: 1px solid #e8dfd3; font-weight: bold; color: var(--color-primary);">القياسات المعتمدة (سم)</div>' +
-              '<div class="spec-line"><span>الطول:</span><span>' + td.measurements.height + ' سم</span></div>' +
-              '<div class="spec-line"><span>الكتف:</span><span>' + td.measurements.shoulder + ' سم</span></div>' +
-              '<div class="spec-line"><span>الصدر:</span><span>' + td.measurements.chest + ' سم</span></div>' +
-              '<div class="spec-line"><span>طول الكم:</span><span>' + td.measurements.sleeve + ' سم</span></div>' +
-              '<div class="spec-line"><span>دوران الرقبة:</span><span>' + td.measurements.neck + ' سم</span></div>';
+            var verifText = order.militaryVerified ? '✓ تم مطابقة الهوية العسكرية' : '⚠️ بانتظار مطابقة الهوية العسكرية يدوياً';
+            var verifColor = order.militaryVerified ? '#2e7d32' : '#c0392b';
+
+            html = 
+              '<div class="spec-line"><span>القطاع العسكري:</span><span>' + esc(branchMap[td.militaryBranch] || td.militaryBranch) + '</span></div>' +
+              '<div class="spec-line"><span>نوع البدلة:</span><span>' + esc(typeMap[td.militaryUniformType] || td.militaryUniformType) + '</span></div>' +
+              '<div class="spec-line"><span>الرتبة العسكرية:</span><span>' + esc(rankMap[td.militaryRank] || td.militaryRank) + '</span></div>' +
+              '<div class="spec-line"><span>الرقم العسكري:</span><span><code>******</code> (محمي)</span></div>' +
+              '<div class="spec-line" style="grid-column: span 2;"><span>طريقة القياسات:</span><span>' + esc(methodMap[td.measurementMethod] || td.measurementMethod) + '</span></div>' +
+              '<div class="spec-line" style="grid-column: span 2; font-weight: bold; color: ' + verifColor + ';"><span>حالة مطابقة الهوية:</span><span>' + verifText + '</span></div>';
+
+            if (td.measurements) {
+              html += 
+                '<div class="spec-line" style="grid-column: span 2; margin-top: 10px; border-bottom: 1px solid #e8dfd3; font-weight: bold; color: var(--color-primary);">القياسات المعتمدة (سم)</div>' +
+                '<div class="spec-line"><span>طول السترة:</span><span>' + td.measurements.jacketLength + ' سم</span></div>' +
+                '<div class="spec-line"><span>عرض الكتف:</span><span>' + td.measurements.shoulder + ' سم</span></div>' +
+                '<div class="spec-line"><span>محيط الصدر:</span><span>' + td.measurements.chest + ' سم</span></div>' +
+                '<div class="spec-line"><span>طول الكم:</span><span>' + td.measurements.sleeve + ' سم</span></div>' +
+                '<div class="spec-line"><span>طول البنطلون:</span><span>' + td.measurements.trouserLength + ' سم</span></div>' +
+                '<div class="spec-line"><span>محيط الخصر:</span><span>' + td.measurements.waist + ' سم</span></div>' +
+                '<div class="spec-line" style="grid-column: span 2;"><span>دوران الرقبة:</span><span>' + td.measurements.neck + ' سم</span></div>';
+            }
+          } else {
+            var collarMap = { round_hard: 'ياقة قلاب قاسي (سعودي)', round_soft: 'ياقة قلاب لين', plain_neck: 'سادة بدون ياقة (كويتي)' };
+            var cuffMap = { cuff_normal: 'سحاب/زرار عادي', cuff_french: 'أكمام كبك فرنسي', cuff_plain: 'أكمام مفتوحة سادة' };
+            var pocketMap = { hidden_side: 'جيب جانبي مخفي', visible_chest: 'جيب صدري', both: 'جيب صدري وجانبي' };
+            var placketMap = { hidden_buttons: 'أزرار مخفية', visible_buttons: 'أزرار ظاهرة كلاسيكية' };
+            var methodMap = { home_visit: 'زيارة خياط للمنزل 🏠', manual: 'إدخال يدوي 📏', saved_profile: 'المقاسات المحفوظة 📂' };
+
+            html = 
+              '<div class="spec-line"><span>الياقة:</span><span>' + esc(collarMap[td.collar] || td.collar) + '</span></div>' +
+              '<div class="spec-line"><span>الأكمام:</span><span>' + esc(cuffMap[td.cuff] || td.cuff) + '</span></div>' +
+              '<div class="spec-line"><span>الجيب:</span><span>' + esc(pocketMap[td.pocket] || td.pocket) + '</span></div>' +
+              '<div class="spec-line"><span>الأزرار:</span><span>' + esc(placketMap[td.placket] || td.placket) + '</span></div>' +
+              '<div class="spec-line" style="grid-column: span 2;"><span>طريقة أخذ القياسات:</span><span>' + esc(methodMap[td.measurementMethod] || td.measurementMethod) + '</span></div>';
+
+            if (td.measurements) {
+              html += 
+                '<div class="spec-line" style="grid-column: span 2; margin-top: 10px; border-bottom: 1px solid #e8dfd3; font-weight: bold; color: var(--color-primary);">القياسات المعتمدة (سم)</div>' +
+                '<div class="spec-line"><span>الطول:</span><span>' + td.measurements.height + ' سم</span></div>' +
+                '<div class="spec-line"><span>الكتف:</span><span>' + td.measurements.shoulder + ' سم</span></div>' +
+                '<div class="spec-line"><span>الصدر:</span><span>' + td.measurements.chest + ' سم</span></div>' +
+                '<div class="spec-line"><span>طول الكم:</span><span>' + td.measurements.sleeve + ' سم</span></div>' +
+                '<div class="spec-line"><span>دوران الرقبة:</span><span>' + td.measurements.neck + ' سم</span></div>';
+            }
           }
 
           specsGrid.innerHTML = html;

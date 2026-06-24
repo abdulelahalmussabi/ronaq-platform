@@ -424,5 +424,25 @@ window.MkenActivitiesCatalog = [
       ctaLabel: 'ابدأ تصميم ثوبك الآن',
       requiresAddress: true,
     }
+  },
+  {
+    id: 'military-tailoring',
+    icon: '🎖️',
+    title: 'تفصيل البدل العسكرية',
+    shortTitle: 'بدل عسكرية',
+    tagline: 'خياطة وتجهيز البدلات العسكرية بالرتب والشعارات الرسمية',
+    description: 'تفصيل وتجهيز البدل العسكرية لكافة القطاعات الأمنية والدفاعية بأعلى دقة وامتثال كامل للاشتراطات الرسمية.',
+    uiProfile: 'order-based',
+    defaultTheme: 'midnight',
+    serviceIds: [
+      'uniform-land-forces',
+      'uniform-air-forces',
+      'uniform-navy-forces',
+      'uniform-security-forces'
+    ],
+    order: {
+      ctaLabel: 'ابدأ تفصيل البدلة العسكرية',
+      requiresAddress: true,
+    }
   }
 ];

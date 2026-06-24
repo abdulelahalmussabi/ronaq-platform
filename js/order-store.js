@@ -163,8 +163,11 @@
   }
 
   function buildCartWhatsAppMessage(brandName, payload) {
+    var title = payload.activityId === 'military-tailoring' 
+      ? 'طلب تفصيل بدل عسكرية — ' + brandName
+      : 'طلب تفصيل ثياب رجالية — ' + brandName;
     var lines = [
-      'طلب تفصيل ثياب رجالية — ' + brandName,
+      title,
       '━━━━━━━━━━━━━━',
     ];
     if (payload.activityTitle) lines.push('النشاط: ' + payload.activityTitle);
@@ -180,26 +183,51 @@
     // إضافة تفاصيل التفصيل والموديل
     if (payload.tailoringDetails) {
       var td = payload.tailoringDetails;
-      var collarMap = { round_hard: 'ياقة قلاب قاسي (سعودي)', round_soft: 'ياقة قلاب لين', plain_neck: 'سادة بدون ياقة (كويتي)' };
-      var cuffMap = { cuff_normal: 'سحاب/زرار عادي', cuff_french: 'أكمام كبك فرنسي', cuff_plain: 'أكمام مفتوحة سادة' };
-      var pocketMap = { hidden_side: 'جيب جانبي مخفي', visible_chest: 'جيب صدري', both: 'جيب صدري وجانبي' };
-      var placketMap = { hidden_buttons: 'أزرار مخفية', visible_buttons: 'أزرار ظاهرة كلاسيكية' };
-      var methodMap = { home_visit: 'زيارة خياط للمنزل 🏠', manual: 'إدخال يدوي 📏', saved_profile: 'المقاسات المحفوظة 📂' };
-      
-      lines.push('خيارات الموديل والتفصيل:');
-      lines.push('• الياقة: ' + (collarMap[td.collar] || td.collar));
-      lines.push('• الأكمام: ' + (cuffMap[td.cuff] || td.cuff));
-      lines.push('• الجيب: ' + (pocketMap[td.pocket] || td.pocket));
-      lines.push('• الأزرار: ' + (placketMap[td.placket] || td.placket));
-      lines.push('• طريقة أخذ القياس: ' + (methodMap[td.measurementMethod] || td.measurementMethod));
-      
-      if (td.measurements) {
-        lines.push('• المقاسات المدخلة:');
-        lines.push('  - الطول: ' + td.measurements.height + ' سم');
-        lines.push('  - الكتف: ' + td.measurements.shoulder + ' سم');
-        lines.push('  - الصدر: ' + td.measurements.chest + ' سم');
-        lines.push('  - الكم: ' + td.measurements.sleeve + ' سم');
-        lines.push('  - الرقبة: ' + td.measurements.neck + ' سم');
+      if (payload.activityId === 'military-tailoring') {
+        var branchMap = { defense: 'وزارة الدفاع', national_guard: 'وزارة الحرس الوطني', interior: 'وزارة الداخلية', state_security: 'رئاسة أمن الدولة' };
+        var typeMap = { camo_field: 'ميدانية / مموه', office: 'مكتبية / يومية', ceremonial: 'مراسم / رسمية' };
+        var rankMap = { soldier: 'جندي إلى وكيل رقيب', sergeant: 'رقيب إلى رئيس رقباء', officer_junior: 'ملازم إلى نقيب', officer_senior: 'رائد إلى عقيد', officer_general: 'عميد وأعلى' };
+        var methodMap = { home_visit: 'زيارة خياط للمنزل 🏠', manual: 'إدخال يدوي 📏', saved_profile: 'المقاسات المحفوظة 📂' };
+        
+        lines.push('خيارات البدلة العسكرية:');
+        lines.push('• القطاع: ' + (branchMap[td.militaryBranch] || td.militaryBranch));
+        lines.push('• نوع البدلة: ' + (typeMap[td.militaryUniformType] || td.militaryUniformType));
+        lines.push('• الرتبة: ' + (rankMap[td.militaryRank] || td.militaryRank));
+        lines.push('• الرقم العسكري: ' + (td.militaryIdNumber ? '******' : 'غير متوفر')); // Masked for security
+        lines.push('• طريقة أخذ القياس: ' + (methodMap[td.measurementMethod] || td.measurementMethod));
+        
+        if (td.measurements) {
+          lines.push('• المقاسات المدخلة:');
+          lines.push('  - السترة: ' + td.measurements.jacketLength + ' سم');
+          lines.push('  - الكتف: ' + td.measurements.shoulder + ' سم');
+          lines.push('  - الصدر: ' + td.measurements.chest + ' سم');
+          lines.push('  - الكم: ' + td.measurements.sleeve + ' سم');
+          lines.push('  - البنطلون: ' + td.measurements.trouserLength + ' سم');
+          lines.push('  - الخصر: ' + td.measurements.waist + ' سم');
+          lines.push('  - الرقبة: ' + td.measurements.neck + ' سم');
+        }
+      } else {
+        var collarMap = { round_hard: 'ياقة قلاب قاسي (سعودي)', round_soft: 'ياقة قلاب لين', plain_neck: 'سادة بدون ياقة (كويتي)' };
+        var cuffMap = { cuff_normal: 'سحاب/زرار عادي', cuff_french: 'أكمام كبك فرنسي', cuff_plain: 'أكمام مفتوحة سادة' };
+        var pocketMap = { hidden_side: 'جيب جانبي مخفي', visible_chest: 'جيب صدري', both: 'جيب صدري وجانبي' };
+        var placketMap = { hidden_buttons: 'أزرار مخفية', visible_buttons: 'أزرار ظاهرة كلاسيكية' };
+        var methodMap = { home_visit: 'زيارة خياط للمنزل 🏠', manual: 'إدخال يدوي 📏', saved_profile: 'المقاسات المحفوظة 📂' };
+        
+        lines.push('خيارات الموديل والتفصيل:');
+        lines.push('• الياقة: ' + (collarMap[td.collar] || td.collar));
+        lines.push('• الأكمام: ' + (cuffMap[td.cuff] || td.cuff));
+        lines.push('• الجيب: ' + (pocketMap[td.pocket] || td.pocket));
+        lines.push('• الأزرار: ' + (placketMap[td.placket] || td.placket));
+        lines.push('• طريقة أخذ القياس: ' + (methodMap[td.measurementMethod] || td.measurementMethod));
+        
+        if (td.measurements) {
+          lines.push('• المقاسات المدخلة:');
+          lines.push('  - الطول: ' + td.measurements.height + ' سم');
+          lines.push('  - الكتف: ' + td.measurements.shoulder + ' سم');
+          lines.push('  - الصدر: ' + td.measurements.chest + ' سم');
+          lines.push('  - الكم: ' + td.measurements.sleeve + ' سم');
+          lines.push('  - الرقبة: ' + td.measurements.neck + ' سم');
+        }
       }
       lines.push('━━━━━━━━━━━━━━');
     }
