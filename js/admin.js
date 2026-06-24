@@ -88,6 +88,13 @@
 
   function switchTab(tabId) {
     activeTab = tabId;
+
+    var adminHeader = document.querySelector('.admin-header');
+    if (adminHeader) {
+      var isSetupTab = ['activities', 'content', 'brand', 'supabase', 'saas', 'developer', 'clients'].indexOf(tabId) !== -1;
+      adminHeader.classList.toggle('admin-header--setup-only', !isSetupTab);
+    }
+
     document.querySelectorAll('.admin-tab').forEach(function (btn) {
       btn.classList.toggle('admin-tab--active', btn.getAttribute('data-tab') === tabId);
     });

@@ -1488,3 +1488,14 @@
   margin-bottom: 16px;
 }
 
+/* Show top bar actions only on setup pages */
+.admin-header.admin-header--setup-only .admin-header__actions {
+  display: none;
+}
+
+/* Hide top bar entirely on desktop for non-setup pages, keeping only hamburger menu on mobile */
+@media (min-width: 1024px) {
+  .admin-header.admin-header--setup-only {
+    display: none;
+  }
+}
