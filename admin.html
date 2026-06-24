@@ -131,6 +131,9 @@
             <button type="button" class="admin-tab" data-tab="supabase">
               <span class="admin-tab-icon">🔗</span>الربط والأتمتة
             </button>
+            <button type="button" class="admin-tab" data-tab="zatca">
+              <span class="admin-tab-icon">🇸🇦</span>هيئة الزكاة (ZATCA)
+            </button>
             <button type="button" class="admin-tab" data-tab="saas">
               <span class="admin-tab-icon">💳</span>الاشتراك والخرائط
             </button>
@@ -1368,6 +1371,91 @@ ALTER TABLE mken_saas_clients ADD COLUMN IF NOT EXISTS subscription_tier TEXT DE
         </div>
       </div>
 
+      <div class="admin-tab-panel" data-panel="zatca" hidden>
+        <div class="admin-grid">
+          <section class="admin-section" style="flex: 2;">
+            <h3>ربط هيئة الزكاة والضريبة والجمارك (ZATCA - فاتورة)</h3>
+            <p class="admin-hint">
+              قم بتهيئة وتفعيل الربط الإلكتروني المباشر لخدمة الفوترة الإلكترونية (المرحلة الثانية) لتوليد فواتير UBL 2.1 XML المعتمدة والموقعة وتقديمها تلقائياً للهيئة.
+            </p>
+            
+            <form id="zatcaConfigForm" style="margin-top: 20px;">
+              <div class="form-group" style="margin-bottom: 15px;">
+                <label style="font-weight: bold; display: block; margin-bottom: 5px;">بيئة الربط والتكامل</label>
+                <select id="zatcaEnv" class="admin-input" style="width: 100%;">
+                  <option value="sandbox">البيئة التجريبية للمطورين (Sandbox)</option>
+                  <option value="production">البيئة الإنتاجية الرسمية (Production)</option>
+                </select>
+              </div>
+
+              <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 15px;">
+                <div class="form-group">
+                  <label style="font-weight: bold; display: block; margin-bottom: 5px;">الرقم الضريبي للمنشأة (15 خانة)</label>
+                  <input type="text" id="zatcaVat" class="admin-input" placeholder="مثال: 311234567800003" pattern="^3[0-9]{14}$" required style="width: 100%;">
+                </div>
+                <div class="form-group">
+                  <label style="font-weight: bold; display: block; margin-bottom: 5px;">الاسم التجاري للمنشأة</label>
+                  <input type="text" id="zatcaBusinessName" class="admin-input" placeholder="مثال: شركة الحلول المبتكرة" required style="width: 100%;">
+                </div>
+              </div>
+
+              <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 15px;">
+                <div class="form-group">
+                  <label style="font-weight: bold; display: block; margin-bottom: 5px;">النشاط التجاري (Category)</label>
+                  <input type="text" id="zatcaCategory" class="admin-input" placeholder="مثال: Retail" value="Retail" required style="width: 100%;">
+                </div>
+                <div class="form-group">
+                  <label style="font-weight: bold; display: block; margin-bottom: 5px;">رمز الـ OTP لبوابة فاتورة (6 خانات)</label>
+                  <input type="text" id="zatcaOtp" class="admin-input" placeholder="احصل عليه من بوابة فاتورة الهيئة" maxlength="6" required style="width: 100%;">
+                </div>
+              </div>
+
+              <div style="border-top: 1px dashed #eee; padding-top: 15px; margin-top: 15px;">
+                <h4 style="margin: 0 0 10px 0;">العنوان الجغرافي للمنشأة (الترخيص الوطني)</h4>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 15px;">
+                  <div class="form-group">
+                    <label style="font-weight: bold; display: block; margin-bottom: 5px;">المدينة</label>
+                    <input type="text" id="zatcaCity" class="admin-input" placeholder="الرياض" value="الرياض" required style="width: 100%;">
+                  </div>
+                  <div class="form-group">
+                    <label style="font-weight: bold; display: block; margin-bottom: 5px;">الحي</label>
+                    <input type="text" id="zatcaDistrict" class="admin-input" placeholder="الورود" required style="width: 100%;">
+                  </div>
+                </div>
+                <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 15px; margin-bottom: 15px;">
+                  <div class="form-group">
+                    <label style="font-weight: bold; display: block; margin-bottom: 5px;">الشارع</label>
+                    <input type="text" id="zatcaStreet" class="admin-input" placeholder="شارع العليا العام" required style="width: 100%;">
+                  </div>
+                  <div class="form-group">
+                    <label style="font-weight: bold; display: block; margin-bottom: 5px;">رقم المبنى</label>
+                    <input type="text" id="zatcaBuilding" class="admin-input" placeholder="1234" required style="width: 100%;">
+                  </div>
+                </div>
+              </div>
+
+              <button type="button" id="startZatcaOnboardingBtn" class="btn btn--primary" style="width: 100%; font-weight: bold; font-size: 1rem; margin-top: 15px;">
+                🇸🇦 بدء عملية الربط والتحقق الذكي
+              </button>
+            </form>
+          </section>
+
+          <section class="admin-section" style="flex: 1; display: flex; flex-direction: column;">
+            <h3>حالة الربط والامتثال</h3>
+            <div id="zatcaStatusCard" style="background: rgba(0, 0, 0, 0.02); padding: 15px; border-radius: 8px; border: 1px solid var(--color-border); text-align: center; margin-bottom: 20px;">
+              <div id="zatcaStatusIndicator" style="font-size: 3rem; margin-bottom: 10px;">🔴</div>
+              <h4 id="zatcaStatusText" style="margin: 0 0 5px 0;">غير متصل بالهيئة</h4>
+              <p id="zatcaStatusSub" class="admin-hint" style="margin: 0;">المنشأة غير مسجلة حالياً في نظام الفوترة الإلكترونية.</p>
+            </div>
+
+            <h4 style="margin: 0 0 10px 0;">سجل العمليات الفنية والربط (Log)</h4>
+            <pre id="zatcaLogs" style="flex-grow: 1; background: #1a1a2e; color: #a6accd; padding: 12px; border-radius: 4px; font-family: monospace; font-size: 0.75rem; overflow-y: auto; max-height: 250px; min-height: 150px; text-align: left; direction: ltr; white-space: pre-wrap; margin: 0;">
+[سجل العمليات فارغ - يرجى الضغط على بدء عملية الربط]
+            </pre>
+          </section>
+        </div>
+      </div>
+
       <div class="admin-tab-panel" data-panel="developer" hidden>
         <div class="admin-grid">
           <section class="admin-section" style="flex: 2;">
@@ -2146,9 +2234,18 @@ ALTER TABLE mken_saas_clients ADD COLUMN IF NOT EXISTS subscription_tier TEXT DE
               </div>
             </div>
           </div>
-          <div class="admin-modal__actions" style="margin-top: 10px; padding: 20px; display: flex; justify-content: flex-end; gap: 8px;">
-            <button type="button" class="btn btn--outline" id="printInvoiceCancel">إغلاق</button>
-            <button type="button" class="btn btn--primary" id="printInvoiceDoBtn">🖨️ طباعة الفاتورة</button>
+          <div class="admin-modal__actions" style="margin-top: 10px; padding: 20px; display: flex; justify-content: space-between; align-items: center; gap: 8px; flex-wrap: wrap;">
+            <div style="display: flex; align-items: center; gap: 8px; color: #000;">
+              <label for="printInvoiceLayout" style="font-weight: bold; font-size: 0.85rem; margin: 0;">حجم الفاتورة:</label>
+              <select id="printInvoiceLayout" class="admin-input" style="padding: 4px 8px; font-size: 0.85rem; width: 160px; height: 32px; background: #fff; border: 1px solid var(--color-border); border-radius: var(--radius);">
+                <option value="thermal" selected>حرارية (Receipt 80mm)</option>
+                <option value="a4">عادية (A4 Standard)</option>
+              </select>
+            </div>
+            <div style="display: flex; gap: 8px;">
+              <button type="button" class="btn btn--outline" id="printInvoiceCancel">إغلاق</button>
+              <button type="button" class="btn btn--primary" id="printInvoiceDoBtn">🖨️ طباعة الفاتورة</button>
+            </div>
           </div>
         </div>
       </div>
@@ -2215,6 +2312,7 @@ ALTER TABLE mken_saas_clients ADD COLUMN IF NOT EXISTS subscription_tier TEXT DE
   <script src="js/admin-clients.js"></script>
   <script src="js/admin-inventory.js"></script>
   <script src="js/admin-invoices.js"></script>
+  <script src="js/admin-zatca.js"></script>
   <script src="js/admin-customers.js"></script>
   <script src="js/admin-purchases.js"></script>
   <script src="js/admin-reports.js"></script>

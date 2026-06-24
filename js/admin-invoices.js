@@ -28,6 +28,7 @@
   var _invoices = [];
   var _items = []; // Inventory items for selection
   var _customers = []; // Customers list
+  var currentPrintInv = null;
 
   function toast(msg, type) {
     if (window.MkenAdminToast) window.MkenAdminToast(msg, type);
@@ -175,8 +176,7 @@
     
     if (window.MkenSupabaseDb && window.MkenSupabaseDb.isConfigured()) {
       var tenantSlug = store.getCurrentTenantSlug();
-      window.MkenSupabaseDb.saveCustomerInvoice(inv, tenantSlug)
-        .then(function () {
+      saveAndReportInvoice(inv, tenantSlug, function () {
           if (targetType === 'invoice') {
             var client = window.MkenSupabaseDb.getClient();
             var promises = (inv.items || []).map(function (item) {
@@ -207,58 +207,285 @@
     }
   }
 
-  function openPrintModal(inv) {
-    if (!printModal) return;
-    printModal.hidden = false;
+  function getZatcaTlvQrCode(sellerName, vatNumber, timestamp, totalAmount, taxAmount) {
+    var encoder = new TextEncoder();
+    function getTlvRecord(tag, valString) {
+      var valBytes = encoder.encode(valString);
+      var record = new Uint8Array(2 + valBytes.length);
+      record[0] = tag;
+      record[1] = valBytes.length;
+      record.set(valBytes, 2);
+      return record;
+    }
+    
+    var r1 = getTlvRecord(1, sellerName);
+    var r2 = getTlvRecord(2, vatNumber);
+    var r3 = getTlvRecord(3, timestamp);
+    var r4 = getTlvRecord(4, String(totalAmount));
+    var r5 = getTlvRecord(5, String(taxAmount));
+    
+    var totalLen = r1.length + r2.length + r3.length + r4.length + r5.length;
+    var buffer = new Uint8Array(totalLen);
+    var offset = 0;
+    [r1, r2, r3, r4, r5].forEach(function(r) {
+      buffer.set(r, offset);
+      offset += r.length;
+    });
+    
+    var binary = '';
+    var len = buffer.byteLength;
+    for (var i = 0; i < len; i++) {
+      binary += String.fromCharCode(buffer[i]);
+    }
+    return window.btoa(binary);
+  }
 
-    var brand = store.getBrand() || { name: 'منصة مكن', tagline: 'حلول ذكية' };
-    var phone = store.loadConfig().phone || '966543530333';
+  function saveAndReportInvoice(invoice, tenantSlug, onSuccess) {
+    var cfg = store.loadConfig() || {};
+    var zatca = cfg.zatcaConfig;
+    
+    var savePromise;
+    if (zatca && zatca.active && invoice.type === 'invoice' && !invoice.zatcaStatus) {
+      var pin = localStorage.getItem('mken_admin_pin') || '';
+      
+      savePromise = fetch('/api/v1/zatca', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-admin-pin': pin
+        },
+        body: JSON.stringify({
+          action: 'report',
+          invoice: invoice,
+          tenantSlug: tenantSlug
+        })
+      })
+        .then(function (res) {
+          return res.json().then(function (data) {
+            if (!res.ok) throw new Error(data.error || 'فشل الاتصال بـ ZATCA');
+            return data;
+          });
+        })
+        .then(function (data) {
+          invoice.zatcaStatus = data.zatcaStatus;
+          invoice.zatcaUuid = data.zatcaUuid;
+          invoice.zatcaXmlHash = data.zatcaXmlHash;
+          invoice.zatcaQrCode = data.zatcaQrCode;
+          return window.MkenSupabaseDb.saveCustomerInvoice(invoice, tenantSlug);
+        })
+        .catch(function (err) {
+          console.warn('ZATCA reporting failed, saving offline', err);
+          invoice.zatcaStatus = 'PENDING';
+          return window.MkenSupabaseDb.saveCustomerInvoice(invoice, tenantSlug);
+        });
+    } else {
+      savePromise = window.MkenSupabaseDb.saveCustomerInvoice(invoice, tenantSlug);
+    }
+    
+    return savePromise.then(onSuccess);
+  }
 
-    var docTitle = inv.type === 'estimate' ? 'عرض سعر' : 'فاتورة مبيعات';
-    document.getElementById('printBrandName').textContent = brand.name + ' - ' + docTitle;
-    document.getElementById('printBrandTagline').textContent = brand.tagline;
-    document.getElementById('printBrandPhone').textContent = 'الهاتف: ' + phone;
-
-    document.getElementById('printInvoiceNo').textContent = inv.id;
-    document.getElementById('printInvoiceDate').textContent = new Date(inv.createdAt).toLocaleString('ar-SA');
-    document.getElementById('printCustomerName').textContent = inv.customerName;
-    document.getElementById('printCustomerPhone').textContent = inv.customerPhone || '—';
-
-    var itemsContainer = document.getElementById('printInvoiceItems');
-    itemsContainer.innerHTML = (inv.items || []).map(function (item) {
+  function generateThermalLayoutHtml(inv, brand, phone, qrBase64) {
+    var docTitle = inv.type === 'estimate' ? 'عرض سعر' : 'فاتورة ضريبية مبسطة';
+    var itemsHtml = (inv.items || []).map(function (item) {
       var price = Number(item.price || 0);
       var qty = Number(item.quantity || 0);
       var total = price * qty;
       return (
         '<tr style="border-bottom: 1px dashed #eee;">' +
-        '  <td style="padding: 5px 0;">' + esc(item.name) + '</td>' +
-        '  <td style="padding: 5px; text-align: center;">' + qty + '</td>' +
-        '  <td style="padding: 5px; text-align: left;">' + price.toFixed(2) + '</td>' +
-        '  <td style="padding: 5px 0; text-align: left;">' + total.toFixed(2) + ' ريال</td>' +
+        '  <td style="padding: 6px 0; text-align: right;">' + esc(item.name) + '</td>' +
+        '  <td style="padding: 6px; text-align: center;">' + qty + '</td>' +
+        '  <td style="padding: 6px; text-align: left;">' + price.toFixed(2) + ' ريال</td>' +
+        '  <td style="padding: 6px 0; text-align: left;">' + total.toFixed(2) + ' ريال</td>' +
         '</tr>'
       );
     }).join('');
 
-    document.getElementById('printSubtotal').textContent = inv.subtotal.toFixed(2) + ' ريال';
-    document.getElementById('printDiscount').textContent = inv.discount.toFixed(2) + ' ريال';
-    document.getElementById('printTax').textContent = inv.taxAmount.toFixed(2) + ' ريال';
-    document.getElementById('printTotal').textContent = inv.totalAmount.toFixed(2) + ' ريال';
-
-    // Generate simple QR Code simulation for ZATCA ONLY IF it is a real invoice
-    var qrContainer = document.getElementById('printInvoiceQr');
-    qrContainer.innerHTML = '';
-    
-    if (inv.type === 'estimate') {
-      qrContainer.style.display = 'none';
-    } else {
-      qrContainer.style.display = 'flex';
-      var qrText = brand.name + '\n' + phone + '\n' + inv.createdAt + '\n' + inv.totalAmount.toFixed(2) + '\n' + inv.taxAmount.toFixed(2);
-      var qrImg = document.createElement('img');
-      qrImg.src = 'https://api.qrserver.com/v1/create-qr-code/?size=80x80&data=' + encodeURIComponent(qrText);
-      qrImg.style.width = '80px';
-      qrImg.style.height = '80px';
-      qrContainer.appendChild(qrImg);
+    var qrBlock = '';
+    if (inv.type !== 'estimate') {
+      qrBlock = 
+        '<div style="display: flex; flex-direction: column; align-items: center; justify-content: center; margin-top: 15px;">' +
+        '  <img src="https://api.qrserver.com/v1/create-qr-code/?size=120x120&data=' + encodeURIComponent(qrBase64) + '" style="width: 110px; height: 110px;" />' +
+        '  <div style="font-size: 0.65rem; color: #27ae60; font-weight: bold; margin-top: 5px; text-align: center;">🧾 فاتورة مبسطة معتمدة ضريبياً</div>' +
+        '</div>';
     }
+
+    return (
+      '<div style="width: 100%; max-width: 380px; margin: 0 auto; font-family: sans-serif; font-size: 0.85rem; color: #000; direction: rtl; text-align: right;">' +
+      '  <div style="text-align: center; margin-bottom: 15px; border-bottom: 2px dashed #000; padding-bottom: 10px;">' +
+      '    <h3 style="margin: 0; font-size: 1.3rem; font-weight: bold;">' + esc(brand.name) + '</h3>' +
+      '    <div style="font-size: 0.75rem; margin-top: 2px; color: #555;">' + esc(brand.tagline || '') + '</div>' +
+      '    <div style="font-size: 0.75rem; margin-top: 2px;">الهاتف: ' + esc(phone) + '</div>' +
+      '    <h4 style="margin: 8px 0 0 0; font-size: 1rem; font-weight: bold; background: #eee; padding: 3px 0;">' + docTitle + '</h4>' +
+      '  </div>' +
+      '  <div style="margin-bottom: 12px; font-size: 0.78rem; line-height: 1.4; border-bottom: 1px dashed #ccc; padding-bottom: 8px;">' +
+      '    <div><strong>رقم المستند:</strong> ' + esc(inv.id) + '</div>' +
+      '    <div><strong>تاريخ الإصدار:</strong> ' + new Date(inv.createdAt).toLocaleString('ar-SA') + '</div>' +
+      '    <div><strong>العميل:</strong> ' + esc(inv.customerName) + '</div>' +
+      '    <div><strong>جوال العميل:</strong> ' + esc(inv.customerPhone || '—') + '</div>' +
+      '  </div>' +
+      '  <table style="width: 100%; border-collapse: collapse; font-size: 0.78rem; margin-bottom: 12px;">' +
+      '    <thead>' +
+      '      <tr style="border-bottom: 1px solid #000; font-weight: bold;">' +
+      '        <th style="padding: 4px 0; text-align: right;">الصنف</th>' +
+      '        <th style="padding: 4px; text-align: center;">الكمية</th>' +
+      '        <th style="padding: 4px; text-align: left;">السعر</th>' +
+      '        <th style="padding: 4px 0; text-align: left;">المجموع</th>' +
+      '      </tr>' +
+      '    </thead>' +
+      '    <tbody>' + itemsHtml + '</tbody>' +
+      '  </table>' +
+      '  <div style="border-top: 1px solid #000; padding-top: 8px; font-size: 0.8rem; display: flex; flex-direction: column; align-items: flex-end; gap: 3px; line-height: 1.3;">' +
+      '    <div>المجموع قبل الضريبة: <span>' + inv.subtotal.toFixed(2) + ' ريال</span></div>' +
+      '    <div>الخصم: <span>' + inv.discount.toFixed(2) + ' ريال</span></div>' +
+      '    <div>ضريبة القيمة المضافة (15%): <span>' + inv.taxAmount.toFixed(2) + ' ريال</span></div>' +
+      '    <div style="font-size: 0.95rem; font-weight: bold; border-top: 1px double #000; padding-top: 4px; margin-top: 2px;">الإجمالي النهائي: <span>' + inv.totalAmount.toFixed(2) + ' ريال</span></div>' +
+      '  </div>' +
+      '  <div style="margin-top: 15px; border-top: 2px dashed #000; padding-top: 10px; display: flex; justify-content: space-between; align-items: center;">' +
+      '    <div style="font-size: 0.7rem; line-height: 1.3; max-width: 60%; color: #333;">' +
+      '      <strong>شكراً لزيارتكم!</strong>' +
+      '      <div>يسعدنا التعامل معكم دائماً.</div>' +
+      '      <div>فاتورة إلكترونية معتمدة</div>' +
+      '    </div>' + qrBlock +
+      '  </div>' +
+      '</div>';
+  }
+
+  function generateA4LayoutHtml(inv, brand, phone, qrBase64) {
+    var cfg = store.loadConfig() || {};
+    var zatca = cfg.zatcaConfig || {};
+    var docTitle = inv.type === 'estimate' ? 'عرض سعر (Quote)' : 'فاتورة ضريبية مبسطة (Simplified Tax Invoice)';
+    
+    var itemsHtml = (inv.items || []).map(function (item, index) {
+      var price = Number(item.price || 0);
+      var qty = Number(item.quantity || 0);
+      var total = price * qty;
+      var tax = total * 0.15;
+      return (
+        '<tr style="border-bottom: 1px solid #e0e0e0;">' +
+        '  <td style="padding: 10px; text-align: center;">' + (index + 1) + '</td>' +
+        '  <td style="padding: 10px; text-align: right; font-weight: 500;">' + esc(item.name) + '</td>' +
+        '  <td style="padding: 10px; text-align: center;">' + qty + '</td>' +
+        '  <td style="padding: 10px; text-align: left;">' + price.toFixed(2) + ' ريال</td>' +
+        '  <td style="padding: 10px; text-align: center;">15%</td>' +
+        '  <td style="padding: 10px; text-align: left;">' + tax.toFixed(2) + ' ريال</td>' +
+        '  <td style="padding: 10px; text-align: left; font-weight: bold;">' + (total + tax).toFixed(2) + ' ريال</td>' +
+        '</tr>'
+      );
+    }).join('');
+
+    var qrBlock = '';
+    if (inv.type !== 'estimate') {
+      qrBlock = 
+        '<div style="text-align: center; border: 1px solid #ddd; padding: 10px; border-radius: 4px; background: #fafafa; display: inline-block;">' +
+        '  <img src="https://api.qrserver.com/v1/create-qr-code/?size=130x130&data=' + encodeURIComponent(qrBase64) + '" style="width: 120px; height: 120px; display: block; margin: 0 auto 5px;" />' +
+        '  <div style="font-size: 0.65rem; color: #27ae60; font-weight: bold;">🧾 الفوترة الإلكترونية (ZATCA)</div>' +
+        '  <div style="font-size: 0.55rem; color: #777; margin-top: 2px; font-family: monospace; max-width: 120px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">UUID: ' + esc(inv.zatcaUuid || 'N/A') + '</div>' +
+        '</div>';
+    }
+
+    return (
+      '<div style="width: 100%; font-family: sans-serif; color: #000; direction: rtl; text-align: right; line-height: 1.5; padding: 10px;">' +
+      '  <div style="display: flex; justify-content: space-between; align-items: flex-start; border-bottom: 2px solid #9b51e0; padding-bottom: 20px; margin-bottom: 25px;">' +
+      '    <div>' +
+      '      <h2 style="margin: 0 0 5px 0; color: #9b51e0; font-weight: 800; font-size: 1.8rem;">' + esc(brand.name) + '</h2>' +
+      '      <div style="font-size: 0.85rem; color: #555;">' + esc(brand.tagline || 'حلول الأعمال الذكية') + '</div>' +
+      '      <div style="margin-top: 10px; font-size: 0.85rem; color: #333;">' +
+      '        <div><strong>العنوان:</strong> ' + esc(zatca.buildingNo || '1234') + ' ' + esc(zatca.street || 'شارع العليا العام') + '، ' + esc(zatca.district || 'الورود') + '، ' + esc(zatca.city || 'الرياض') + '، المملكة العربية السعودية</div>' +
+      '        <div><strong>الهاتف:</strong> ' + esc(phone) + '</div>' +
+      '        <div><strong>الرقم الضريبي للمورد (VAT):</strong> ' + esc(zatca.vatNumber || '311234567800003') + '</div>' +
+      '      </div>' +
+      '    </div>' +
+      '    <div style="text-align: left; background: #fafafa; border: 1px solid #eee; padding: 15px; border-radius: 4px; min-width: 240px;">' +
+      '      <h3 style="margin: 0 0 10px 0; color: #000; font-size: 1.15rem; font-weight: bold; border-bottom: 1px solid #ddd; padding-bottom: 5px;">' + docTitle + '</h3>' +
+      '      <div style="font-size: 0.85rem; color: #333; display: grid; gap: 4px;">' +
+      '        <div><strong>رقم الفاتورة:</strong> <span style="font-family: monospace; font-weight: bold;">' + esc(inv.id) + '</span></div>' +
+      '        <div><strong>التاريخ والوقت:</strong> ' + new Date(inv.createdAt).toLocaleString('ar-SA') + '</div>' +
+      '        <div><strong>العملة:</strong> ريال سعودي (SAR)</div>' +
+      '      </div>' +
+      '    </div>' +
+      '  </div>' +
+      '  <div style="background: #f8f9fa; border: 1px solid #e9ecef; padding: 15px; border-radius: 4px; margin-bottom: 25px; display: flex; justify-content: space-between; align-items: center; gap: 15px;">' +
+      '    <div>' +
+      '      <h4 style="margin: 0 0 8px 0; color: #777; font-size: 0.8rem; text-transform: uppercase;">تفاصيل العميل (Client Details)</h4>' +
+      '      <div style="font-weight: bold; font-size: 1rem; color: #000;">الاسم: ' + esc(inv.customerName) + '</div>' +
+      '      <div style="font-size: 0.85rem; color: #555; margin-top: 4px;">الجوال: ' + esc(inv.customerPhone || '—') + '</div>' +
+      '    </div>' +
+      '    <div style="text-align: left; display: flex; flex-direction: column; justify-content: center;">' +
+      '      <div style="font-size: 0.85rem; color: #333;">حالة الدفع: <span style="font-weight: bold; color: ' + (inv.paymentStatus === 'paid' ? 'green' : 'orange') + ';">' + (inv.paymentStatus === 'paid' ? 'مدفوعة (Paid)' : 'غير مدفوعة (Unpaid)') + '</span></div>' +
+      '      <div style="font-size: 0.85rem; color: #333; margin-top: 4px;">طريقة الدفع: ' + (inv.paymentMethod === 'card' ? 'بطاقة مدى (Mada)' : inv.paymentMethod === 'bank' ? 'تحويل بنكي (Bank)' : 'نقدي (Cash)') + '</div>' +
+      '    </div>' +
+      '  </div>' +
+      '  <table style="width: 100%; border-collapse: collapse; font-size: 0.88rem; margin-bottom: 25px;">' +
+      '    <thead>' +
+      '      <tr style="background: #fafafa; border-bottom: 2px solid #ddd; font-weight: bold; color: #333;">' +
+      '        <th style="padding: 10px; text-align: center; width: 40px;">#</th>' +
+      '        <th style="padding: 10px; text-align: right;">الوصف / الصنف (Description)</th>' +
+      '        <th style="padding: 10px; text-align: center; width: 80px;">الكمية</th>' +
+      '        <th style="padding: 10px; text-align: left; width: 120px;">سعر الوحدة</th>' +
+      '        <th style="padding: 10px; text-align: center; width: 80px;">الضريبة</th>' +
+      '        <th style="padding: 10px; text-align: left; width: 120px;">مبلغ الضريبة</th>' +
+      '        <th style="padding: 10px; text-align: left; width: 130px;">الإجمالي شاملاً الضريبة</th>' +
+      '      </tr>' +
+      '    </thead>' +
+      '    <tbody>' + itemsHtml + '</tbody>' +
+      '  </table>' +
+      '  <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-top: 20px;">' +
+      '    <div>' + qrBlock + '</div>' +
+      '    <div style="min-width: 320px; display: grid; gap: 8px; font-size: 0.9rem; border: 1px solid #eee; padding: 15px; border-radius: 4px; background: #fdfdfd;">' +
+      '      <div style="display: flex; justify-content: space-between;">' +
+      '        <span style="color: #666;">المجموع قبل الضريبة:</span>' +
+      '        <span style="font-weight: 500;">' + inv.subtotal.toFixed(2) + ' ريال</span>' +
+      '      </div>' +
+      '      <div style="display: flex; justify-content: space-between; color: #c0392b;">' +
+      '        <span>الخصم (Discount):</span>' +
+      '        <span>-' + inv.discount.toFixed(2) + ' ريال</span>' +
+      '      </div>' +
+      '      <div style="display: flex; justify-content: space-between;">' +
+      '        <span style="color: #666;">ضريبة القيمة المضافة (15%):</span>' +
+      '        <span style="font-weight: 500;">' + inv.taxAmount.toFixed(2) + ' ريال</span>' +
+      '      </div>' +
+      '      <div style="display: flex; justify-content: space-between; font-size: 1.15rem; font-weight: bold; border-top: 2px solid #ddd; padding-top: 8px; margin-top: 4px; color: #9b51e0;">' +
+      '        <span>الإجمالي النهائي (Total):</span>' +
+      '        <span>' + inv.totalAmount.toFixed(2) + ' ريال</span>' +
+      '      </div>' +
+      '    </div>' +
+      '  </div>' +
+      '  <div style="margin-top: 40px; border-top: 1px solid #ddd; padding-top: 15px; font-size: 0.75rem; text-align: center; color: #777;">' +
+      '    تخضع هذه الفاتورة لكافة اشتراطات هيئة الزكاة والضريبة والجمارك بالمملكة العربية السعودية (لائحة الفوترة الإلكترونية المرحلة الثانية).' +
+      '  </div>' +
+      '</div>';
+  }
+
+  function renderPrintArea(inv, layout) {
+    var brand = store.getBrand() || { name: 'منصة مكن', tagline: 'حلول ذكية' };
+    var phone = store.loadConfig().phone || '966543530333';
+    var cfg = store.loadConfig() || {};
+    
+    var qrBase64 = inv.zatcaQrCode;
+    if (!qrBase64) {
+      var vatNumber = (cfg.zatcaConfig && cfg.zatcaConfig.vatNumber) || '311234567800003';
+      qrBase64 = getZatcaTlvQrCode(brand.name, vatNumber, inv.createdAt, inv.totalAmount.toFixed(2), inv.taxAmount.toFixed(2));
+    }
+    
+    var printArea = document.getElementById('invoicePrintArea');
+    if (!printArea) return;
+    
+    if (layout === 'a4') {
+      printArea.innerHTML = generateA4LayoutHtml(inv, brand, phone, qrBase64);
+    } else {
+      printArea.innerHTML = generateThermalLayoutHtml(inv, brand, phone, qrBase64);
+    }
+  }
+
+  function openPrintModal(inv) {
+    if (!printModal) return;
+    printModal.hidden = false;
+    currentPrintInv = inv;
+    
+    var layoutSelect = document.getElementById('printInvoiceLayout');
+    var layout = (layoutSelect && layoutSelect.value) || 'thermal';
+    renderPrintArea(inv, layout);
   }
 
   function closePrintModal() {
@@ -446,6 +673,15 @@
       printCancelBtn.addEventListener('click', closePrintModal);
     }
 
+    var layoutSelect = document.getElementById('printInvoiceLayout');
+    if (layoutSelect) {
+      layoutSelect.addEventListener('change', function () {
+        if (currentPrintInv) {
+          renderPrintArea(currentPrintInv, this.value);
+        }
+      });
+    }
+
     if (printDoBtn) {
       printDoBtn.addEventListener('click', function () {
         var printContent = document.getElementById('invoicePrintArea').innerHTML;
@@ -542,8 +778,7 @@
         if (window.MkenSupabaseDb && window.MkenSupabaseDb.isConfigured()) {
           var tenantSlug = store.getCurrentTenantSlug();
 
-          window.MkenSupabaseDb.saveCustomerInvoice(invoice, tenantSlug)
-            .then(function () {
+          saveAndReportInvoice(invoice, tenantSlug, function () {
               // Deduct stock in DB via rpc calls ONLY IF type is 'invoice'
               if (type === 'invoice') {
                 var client = window.MkenSupabaseDb.getClient();

@@ -91,7 +91,7 @@
 
     var adminHeader = document.querySelector('.admin-header');
     if (adminHeader) {
-      var isSetupTab = ['activities', 'content', 'brand', 'supabase', 'saas', 'developer', 'clients'].indexOf(tabId) !== -1;
+      var isSetupTab = ['activities', 'content', 'brand', 'supabase', 'saas', 'developer', 'clients', 'zatca'].indexOf(tabId) !== -1;
       adminHeader.classList.toggle('admin-header--setup-only', !isSetupTab);
     }
 
@@ -126,6 +126,9 @@
     }
     if (tabId === 'clients' && window.MkenAdminClients) {
       window.MkenAdminClients.refresh();
+    }
+    if (tabId === 'zatca' && window.MkenAdminZatca) {
+      window.MkenAdminZatca.refresh();
     }
     if (tabId === 'inventory' && window.MkenAdminInventory) {
       window.MkenAdminInventory.refresh();

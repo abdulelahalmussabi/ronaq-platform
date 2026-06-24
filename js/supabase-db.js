@@ -992,13 +992,17 @@
         .then(function (res) {
           if (res.error) throw res.error;
           var data = (res.data || []).map(function (row) {
+            var items = row.items || [];
+            var zatcaMeta = items.find(function(x) { return x && x.isZatcaMeta; });
+            var cleanItems = items.filter(function(x) { return x && !x.isZatcaMeta; });
+
             return {
               id: row.id,
               tenantSlug: row.tenant_slug,
               customerId: row.customer_id || null,
               customerName: row.customer_name,
               customerPhone: row.customer_phone || '',
-              items: row.items || [],
+              items: cleanItems,
               subtotal: Number(row.subtotal || 0),
               taxAmount: Number(row.tax_amount || 0),
               discount: Number(row.discount || 0),
@@ -1007,7 +1011,11 @@
               paymentMethod: row.payment_method || '',
               type: row.type || 'invoice',
               createdAt: row.created_at,
-              updatedAt: row.updated_at
+              updatedAt: row.updated_at,
+              zatcaStatus: zatcaMeta ? zatcaMeta.zatcaStatus : null,
+              zatcaUuid: zatcaMeta ? zatcaMeta.zatcaUuid : null,
+              zatcaXmlHash: zatcaMeta ? zatcaMeta.zatcaXmlHash : null,
+              zatcaQrCode: zatcaMeta ? zatcaMeta.zatcaQrCode : null
             };
           });
           setCache(cacheKey, data);
@@ -1029,13 +1037,24 @@
     var cacheKey = 'mken_cache_invoices';
     var slug = tenantSlug || invoice.tenantSlug || 'default';
 
+    var finalItems = (invoice.items || []).filter(function(x) { return x && !x.isZatcaMeta; });
+    if (invoice.zatcaStatus) {
+      finalItems.push({
+        isZatcaMeta: true,
+        zatcaStatus: invoice.zatcaStatus,
+        zatcaUuid: invoice.zatcaUuid,
+        zatcaXmlHash: invoice.zatcaXmlHash,
+        zatcaQrCode: invoice.zatcaQrCode
+      });
+    }
+
     var localInvoice = {
       id: invoice.id,
       tenantSlug: slug,
       customerId: invoice.customerId || null,
       customerName: invoice.customerName,
       customerPhone: invoice.customerPhone || '',
-      items: invoice.items || [],
+      items: finalItems,
       subtotal: Number(invoice.subtotal || 0),
       taxAmount: Number(invoice.taxAmount || 0),
       discount: Number(invoice.discount || 0),
@@ -1057,7 +1076,7 @@
           customer_id: invoice.customerId || null,
           customer_name: invoice.customerName,
           customer_phone: invoice.customerPhone || null,
-          items: invoice.items || [],
+          items: finalItems,
           subtotal: Number(invoice.subtotal || 0),
           tax_amount: Number(invoice.taxAmount || 0),
           discount: Number(invoice.discount || 0),
