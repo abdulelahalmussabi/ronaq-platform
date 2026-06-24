@@ -317,6 +317,99 @@
     if (block) block.hidden = !needsAddress();
   }
 
+  function renderTailoringForm() {
+    var block = document.getElementById('tailoringFormBlock');
+    if (!block) return;
+
+    if (activeActivityId !== 'tailoring') {
+      block.hidden = true;
+      block.innerHTML = '';
+      return;
+    }
+
+    block.hidden = false;
+    block.innerHTML =
+      '<h3 style="margin-top: 0; margin-bottom: 15px; font-size: 1.1rem; color: var(--color-primary); border-bottom: 2px solid var(--color-border); padding-bottom: 8px;">خيارات تفصيل الثوب ومقاساتك</h3>' +
+      
+      '<div class="booking-field" style="margin-bottom: 12px;">' +
+      '  <label for="tailorCollar" style="font-weight: 600;">تصميم الياقة (القبة) *</label>' +
+      '  <select id="tailorCollar" class="admin-input" style="width: 100%; padding: 8px; border-radius: var(--radius); border: 1px solid var(--color-border);" required>' +
+      '    <option value="round_hard">ياقة قلاب قاسي (سعودي كلاسيك)</option>' +
+      '    <option value="round_soft">ياقة قلاب لين</option>' +
+      '    <option value="plain_neck">سادة بدون ياقة (كويتي)</option>' +
+      '  </select>' +
+      '</div>' +
+
+      '<div class="booking-field" style="margin-bottom: 12px;">' +
+      '  <label for="tailorCuff" style="font-weight: 600;">تصميم الأكمام *</label>' +
+      '  <select id="tailorCuff" class="admin-input" style="width: 100%; padding: 8px; border-radius: var(--radius); border: 1px solid var(--color-border);" required>' +
+      '    <option value="cuff_normal">كبك عادي بزرار واحد</option>' +
+      '    <option value="cuff_french">أكمام كبك فرنسي (للأزرار المنفصلة)</option>' +
+      '    <option value="cuff_plain">أكمام مفتوحة سادة</option>' +
+      '  </select>' +
+      '</div>' +
+
+      '<div class="booking-field" style="margin-bottom: 12px;">' +
+      '  <label for="tailorPocket" style="font-weight: 600;">الجيب *</label>' +
+      '  <select id="tailorPocket" class="admin-input" style="width: 100%; padding: 8px; border-radius: var(--radius); border: 1px solid var(--color-border);" required>' +
+      '    <option value="hidden_side">جيب جانبي مخفي</option>' +
+      '    <option value="visible_chest">جيب أمامي على الصدر</option>' +
+      '    <option value="both">جيب صدري وجيوب جانبية</option>' +
+      '  </select>' +
+      '</div>' +
+
+      '<div class="booking-field" style="margin-bottom: 12px;">' +
+      '  <label for="tailorPlacket" style="font-weight: 600;">أزرار الثوب *</label>' +
+      '  <select id="tailorPlacket" class="admin-input" style="width: 100%; padding: 8px; border-radius: var(--radius); border: 1px solid var(--color-border);" required>' +
+      '    <option value="hidden_buttons">أزرار مخفية (مغطاة بالقماش)</option>' +
+      '    <option value="visible_buttons">أزرار ظاهرة</option>' +
+      '  </select>' +
+      '</div>' +
+
+      '<div class="booking-field" style="margin-bottom: 12px;">' +
+      '  <label for="tailorMeasurementMethod" style="font-weight: 600;">طريقة تحديد القياسات *</label>' +
+      '  <select id="tailorMeasurementMethod" class="admin-input" style="width: 100%; padding: 8px; border-radius: var(--radius); border: 1px solid var(--color-border);" required>' +
+      '    <option value="home_visit">إرسال خياط للمنزل لأخذ مقاساتي (خدمة مجانية)</option>' +
+      '    <option value="manual">سأقوم بإدخال مقاساتي يدوياً الآن</option>' +
+      '    <option value="saved_profile">استخدام مقاساتي المحفوظة سابقاً</option>' +
+      '  </select>' +
+      '</div>' +
+
+      '<div id="manualMeasurementsFields" style="background: #f7f7f9; padding: 16px; border-radius: var(--radius); border: 1px solid var(--color-border); margin-bottom: 12px;" hidden>' +
+      '  <h4 style="margin: 0 0 12px 0; font-size: 0.95rem; color: var(--color-primary);">القياسات المطلوبة (بالسنتيمتر - سم)</h4>' +
+      '  <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">' +
+      '    <div>' +
+      '      <label style="font-size: 0.8rem; display:block; margin-bottom: 4px;">الطول الإجمالي</label>' +
+      '      <input type="number" id="measHeight" class="admin-input" placeholder="مثال: 145" style="width: 100%; padding: 6px;">' +
+      '    </div>' +
+      '    <div>' +
+      '      <label style="font-size: 0.8rem; display:block; margin-bottom: 4px;">عرض الكتف</label>' +
+      '      <input type="number" id="measShoulder" class="admin-input" placeholder="مثال: 46" style="width: 100%; padding: 6px;">' +
+      '    </div>' +
+      '    <div>' +
+      '      <label style="font-size: 0.8rem; display:block; margin-bottom: 4px;">محيط الصدر</label>' +
+      '      <input type="number" id="measChest" class="admin-input" placeholder="مثال: 58" style="width: 100%; padding: 6px;">' +
+      '    </div>' +
+      '    <div>' +
+      '      <label style="font-size: 0.8rem; display:block; margin-bottom: 4px;">طول الكم</label>' +
+      '      <input type="number" id="measSleeve" class="admin-input" placeholder="مثال: 62" style="width: 100%; padding: 6px;">' +
+      '    </div>' +
+      '    <div style="grid-column: span 2;">' +
+      '      <label style="font-size: 0.8rem; display:block; margin-bottom: 4px;">محيط الرقبة</label>' +
+      '      <input type="number" id="measNeck" class="admin-input" placeholder="مثال: 41" style="width: 100%; padding: 6px;">' +
+      '    </div>' +
+      '  </div>' +
+      '</div>';
+
+    var methodSelect = document.getElementById('tailorMeasurementMethod');
+    var manualFields = document.getElementById('manualMeasurementsFields');
+    if (methodSelect && manualFields) {
+      methodSelect.addEventListener('change', function () {
+        manualFields.hidden = methodSelect.value !== 'manual';
+      });
+    }
+  }
+
   function calculateCartTotal() {
     var cart = orderStore.getCart(activeActivityId);
     var total = 0;
@@ -519,6 +612,34 @@
       notes: notes,
     };
 
+    if (activeActivityId === 'tailoring') {
+      var collarVal = document.getElementById('tailorCollar').value;
+      var cuffVal = document.getElementById('tailorCuff').value;
+      var pocketVal = document.getElementById('tailorPocket').value;
+      var placketVal = document.getElementById('tailorPlacket').value;
+      var methodVal = document.getElementById('tailorMeasurementMethod').value;
+      
+      var measurementsVal = null;
+      if (methodVal === 'manual') {
+        measurementsVal = {
+          height: parseFloat(document.getElementById('measHeight').value) || 0,
+          shoulder: parseFloat(document.getElementById('measShoulder').value) || 0,
+          chest: parseFloat(document.getElementById('measChest').value) || 0,
+          sleeve: parseFloat(document.getElementById('measSleeve').value) || 0,
+          neck: parseFloat(document.getElementById('measNeck').value) || 0
+        };
+      }
+
+      payload.tailoringDetails = {
+        collar: collarVal,
+        cuff: cuffVal,
+        pocket: pocketVal,
+        placket: placketVal,
+        measurementMethod: methodVal,
+        measurements: measurementsVal
+      };
+    }
+
     var brandName = store.getBrand(config).name;
 
     // Check payment
@@ -624,6 +745,7 @@
       showPanel('panelForm');
       setStep(3);
       toggleAddressField();
+      renderTailoringForm();
     });
     document.getElementById('btnBackCart').addEventListener('click', function () {
       showPanel('panelCart');

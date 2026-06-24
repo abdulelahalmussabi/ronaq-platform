@@ -405,5 +405,24 @@ window.MkenActivitiesCatalog = [
     defaultTheme: 'midnight',
     serviceIds: ['hockey-training', 'hockey-match', 'hockey-private-coaching'],
     booking: { type: 'appointment', requiresAddress: false, slotDuration: 90, ctaLabel: 'بوابة تمارين الهوكي', portalUrl: 'coaching.html' },
+  },
+  {
+    id: 'tailoring',
+    icon: '🪡',
+    title: 'تفصيل الثياب الرجالية',
+    shortTitle: 'تفصيل ثياب',
+    tagline: 'تفصيل راقٍ وخدمة منزلية بمتابعة كاملة',
+    description: 'اختر قماشك وموديلك المفضل، وسنقوم بأخذ مقاساتك في منزلك مجاناً وتحديثك بالواتساب مع تتبع ثوبك خطوة بخطوة.',
+    uiProfile: 'order-based',
+    defaultTheme: 'midnight',
+    serviceIds: [
+      'fabric-japanese-cotton',
+      'fabric-korean-practical',
+      'fabric-winter-wool'
+    ],
+    order: {
+      ctaLabel: 'ابدأ تصميم ثوبك الآن',
+      requiresAddress: true,
+    }
   }
 ];

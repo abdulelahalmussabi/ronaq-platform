@@ -58,6 +58,7 @@ window.MkenContentRegistry = {
   events: function () { return window.MkenContentEvents; },
   commerce: function () { return window.MkenContentCommerce; },
   hockey: function () { return window.MkenContentHockey; },
+  tailoring: function () { return window.MkenContentTailoring; },
 };
 
 window.MkenUiProfile = {

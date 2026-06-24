@@ -2,6 +2,10 @@
   "name": "mken-platform",
   "version": "1.0.0",
   "private": true,
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/abdulelahalmussabi/Mken.git"
+  },
   "dependencies": {
     "@supabase/supabase-js": "^2.39.0",
     "web-push": "^3.6.7"

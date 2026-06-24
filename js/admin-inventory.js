@@ -75,10 +75,18 @@
         qtyStyle = 'background: #fdf2f2; color: #c0392b; font-weight: bold; padding: 4px 8px; border-radius: 4px; border: 1px solid #fde2e2;';
       }
 
+      var nameHtml = esc(item.name);
+      if (item.is_fabric_roll || item.name.indexOf('لفة') !== -1 || item.name.indexOf('قماش') !== -1) {
+        var rate = item.consumption_rate_per_thobe || 3.5;
+        var estThobes = Math.floor(item.quantity / rate);
+        nameHtml += ' <br><span class="badge" style="background: #e3f2fd; color: #0d47a1; margin-top: 4px; display: inline-block; font-size: 0.75rem;">' +
+                    'طول اللفة: ' + item.quantity + ' م — تكفي لـ ' + estThobes + ' ثياب (معدل: ' + rate + 'م)' + '</span>';
+      }
+
       return (
         '<tr data-item-id="' + item.id + '" style="border-bottom: 1px solid var(--color-border);">' +
         '  <td style="padding: 12px;">' + imgHtml + '</td>' +
-        '  <td style="padding: 12px; font-weight: 500; color: var(--color-text);">' + esc(item.name) + '</td>' +
+        '  <td style="padding: 12px; font-weight: 500; color: var(--color-text);">' + nameHtml + '</td>' +
         '  <td style="padding: 12px; font-family: monospace;">' + esc(item.sku || '—') + (item.barcode ? ' / ' + esc(item.barcode) : '') + '</td>' +
         '  <td style="padding: 12px;">' + item.costPrice.toFixed(2) + ' ريال</td>' +
         '  <td style="padding: 12px; font-weight: bold; color: var(--color-primary);">' + item.sellPrice.toFixed(2) + ' ريال</td>' +
@@ -189,6 +197,10 @@
     var minInput = document.getElementById('itemMinStockAlert');
     var urlInput = document.getElementById('itemImageUrl');
 
+    var isFabricCheckbox = document.getElementById('itemIsFabricRoll');
+    var fabricFields = document.getElementById('fabricRollFields');
+    var consumptionRateInput = document.getElementById('itemConsumptionRate');
+
     if (item) {
       title.textContent = 'تعديل المنتج';
       idInput.value = item.id;
@@ -201,6 +213,10 @@
       minInput.value = item.minStockAlert;
       urlInput.value = item.imageUrl;
       qtyInput.disabled = true; // Adjustments should go through stock logs or custom adjustment, disabled for simplicity in basic edit
+      
+      if (isFabricCheckbox) isFabricCheckbox.checked = !!item.is_fabric_roll;
+      if (consumptionRateInput) consumptionRateInput.value = item.consumption_rate_per_thobe || '3.5';
+      if (fabricFields) fabricFields.hidden = !item.is_fabric_roll;
     } else {
       title.textContent = 'إضافة منتج جديد';
       idInput.value = '';
@@ -213,6 +229,10 @@
       minInput.value = '5';
       urlInput.value = '';
       qtyInput.disabled = false;
+      
+      if (isFabricCheckbox) isFabricCheckbox.checked = false;
+      if (consumptionRateInput) consumptionRateInput.value = '3.5';
+      if (fabricFields) fabricFields.hidden = true;
     }
   }
 
@@ -235,6 +255,14 @@
   }
 
   function bindEvents() {
+    var isFabricCheckbox = document.getElementById('itemIsFabricRoll');
+    var fabricFields = document.getElementById('fabricRollFields');
+    if (isFabricCheckbox && fabricFields) {
+      isFabricCheckbox.addEventListener('change', function () {
+        fabricFields.hidden = !isFabricCheckbox.checked;
+      });
+    }
+
     if (addNewBtn) {
       addNewBtn.addEventListener('click', function () {
         openModal(null);
@@ -262,6 +290,9 @@
         var minVal = parseInt(document.getElementById('itemMinStockAlert').value) || 0;
         var urlVal = document.getElementById('itemImageUrl').value;
 
+        var isFabricRoll = document.getElementById('itemIsFabricRoll').checked;
+        var consumptionRate = parseFloat(document.getElementById('itemConsumptionRate').value) || 3.5;
+
         var payload = {
           id: targetId,
           name: nameVal,
@@ -271,7 +302,9 @@
           sellPrice: sellVal,
           quantity: qtyVal,
           minStockAlert: minVal,
-          imageUrl: urlVal
+          imageUrl: urlVal,
+          is_fabric_roll: isFabricRoll,
+          consumption_rate_per_thobe: consumptionRate
         };
 
         if (window.MkenSupabaseDb && window.MkenSupabaseDb.isConfigured()) {

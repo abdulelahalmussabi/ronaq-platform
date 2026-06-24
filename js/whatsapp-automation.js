@@ -647,6 +647,47 @@
     return sendWhatsAppMessage(order.phone, message, 'order_confirmation', null, config, imageUrl);
   }
 
+  function sendOrderStatusUpdateMessage(order, newStatus, config) {
+    var store = window.MkenServicesStore;
+    var orderStore = window.MkenOrderStore;
+    if (!store || !orderStore) return Promise.reject(new Error('Stores not loaded'));
+
+    var brandName = store.getBrand(config).name;
+    var waConfig = getWhatsAppConfig(config);
+    if (!waConfig.enabled) {
+      return Promise.resolve();
+    }
+
+    var origin = window.location.origin || 'https://mken.live';
+    var trackLink = origin + '/track.html?id=' + order.id;
+
+    var statusNames = {
+      pending: 'طلب جديد (قيد المراجعة)',
+      measurements_pending: 'بانتظار أخذ المقاسات',
+      cutting: 'مرحلة قص القماش ✂️',
+      stitching: 'تحت الخياطة والتفصيل 🪡',
+      ironing_packaging: 'الكي والتغليف النهائي 🌟',
+      ready: 'جاهز للاستلام / الشحن 📦',
+      completed: 'تم التسليم بنجاح'
+    };
+
+    var statusText = statusNames[newStatus] || newStatus;
+
+    var message = 
+      'تحديث حالة الطلب — ' + brandName + '\n' +
+      '━━━━━━━━━━━━━━\n' +
+      'عزيزي العميل: ' + (order.customerName || order.customer_name) + '\n' +
+      'تم تحديث حالة طلبك رقم: ' + order.id + '\n' +
+      'الحالة الجديدة: *' + statusText + '*\n' +
+      '━━━━━━━━━━━━━━\n' +
+      '🔗 يمكنك متابعة تفاصيل ثوبك والمقاسات من هنا:\n' +
+      trackLink + '\n' +
+      '━━━━━━━━━━━━━━\n' +
+      'شكراً لثقتك بنا 🌸';
+
+    return sendWhatsAppMessage(order.phone, message, 'order_status_update', null, config);
+  }
+
   function sendOwnerAlertMessage(data, type, config) {
     var store = window.MkenServicesStore;
     if (!store) return Promise.reject(new Error('Store not loaded'));
@@ -778,6 +819,7 @@
     sendCancellation: sendCancellationMessage,
     sendPostponement: sendPostponementMessage,
     sendOrderConfirmation: sendOrderConfirmationMessage,
+    sendOrderStatusUpdate: sendOrderStatusUpdateMessage,
     sendOwnerAlert: sendOwnerAlertMessage,
     sendTechnicianAssignment: sendTechnicianAssignmentMessage,
     processQueue: processAutomatedReminders,

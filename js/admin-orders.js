@@ -96,6 +96,12 @@
       var statusText = 'قيد الانتظار';
       if (ord.status === 'confirmed') { statusColor = '#2e7d32'; statusText = 'مؤكد'; }
       else if (ord.status === 'cancelled') { statusColor = '#c0392b'; statusText = 'ملغي'; }
+      else if (ord.status === 'measurements_pending') { statusColor = '#f2994a'; statusText = 'بانتظار القياسات'; }
+      else if (ord.status === 'cutting') { statusColor = '#0288d1'; statusText = 'مرحلة القص ✂️'; }
+      else if (ord.status === 'stitching') { statusColor = '#9b51e0'; statusText = 'تحت الخياطة 🪡'; }
+      else if (ord.status === 'ironing_packaging') { statusColor = '#f2c94c'; statusText = 'الكي والتجهيز 🌟'; }
+      else if (ord.status === 'ready') { statusColor = '#27ae60'; statusText = 'جاهز للتسليم 📦'; }
+      else if (ord.status === 'completed') { statusColor = '#2e7d32'; statusText = 'تم التسليم'; }
 
       var payColor = '#777';
       var payText = 'غير مدفوع';
@@ -140,12 +146,54 @@
         '      </div>' +
         '      ' + (ord.paymentId ? '<span style="font-size: 0.75rem; color: var(--color-text-muted); display:block;">رقم العملية: ' + esc(ord.paymentId) + ' (' + esc(ord.paymentMethod) + ')</span>' : '') +
         '      ' + (ord.paymentAmount ? '<span style="font-size: 0.82rem; font-weight: bold; color: var(--color-primary);">المبلغ: ' + ord.paymentAmount + ' ريال</span>' : '') +
+        '      var isTailoring = ord.activityId === 'tailoring';
+      var statusSelectHtml = '';
+      if (isTailoring) {
+        statusSelectHtml = 
+          '        <select class="admin-input btn--sm" data-action="status" style="width: auto; padding: 4px 8px;" title="تعديل الحالة">' +
+          '          <option value="pending"' + (ord.status === 'pending' ? ' selected' : '') + '>قيد الانتظار</option>' +
+          '          <option value="measurements_pending"' + (ord.status === 'measurements_pending' ? ' selected' : '') + '>بانتظار القياسات</option>' +
+          '          <option value="cutting"' + (ord.status === 'cutting' ? ' selected' : '') + '>مرحلة القص ✂️</option>' +
+          '          <option value="stitching"' + (ord.status === 'stitching' ? ' selected' : '') + '>تحت الخياطة 🪡</option>' +
+          '          <option value="ironing_packaging"' + (ord.status === 'ironing_packaging' ? ' selected' : '') + '>الكي والتجهيز 🌟</option>' +
+          '          <option value="ready"' + (ord.status === 'ready' ? ' selected' : '') + '>جاهز للتسليم 📦</option>' +
+          '          <option value="completed"' + (ord.status === 'completed' ? ' selected' : '') + '>تم التسليم</option>' +
+          '          <option value="cancelled"' + (ord.status === 'cancelled' ? ' selected' : '') + '>إلغاء الطلب</option>' +
+          '        </select>';
+      } else {
+        statusSelectHtml =
+          '        <select class="admin-input btn--sm" data-action="status" style="width: auto; padding: 4px 8px;" title="تعديل الحالة">' +
+          '          <option value="pending"' + (ord.status === 'pending' ? ' selected' : '') + '>قيد الانتظار</option>' +
+          '          <option value="confirmed"' + (ord.status === 'confirmed' ? ' selected' : '') + '>تأكيد الطلب</option>' +
+          '          <option value="cancelled"' + (ord.status === 'cancelled' ? ' selected' : '') + '>إلغاء الطلب</option>' +
+          '        </select>';
+      }
+
+      return (
+        '<div class="admin-appointment-card" data-order-id="' + ord.id + '" style="border-right: 4px solid ' + statusColor + '; padding: 16px; background: #fff; margin-bottom: 12px; border-radius: var(--radius); border: 1px solid var(--color-border); border-right-width: 5px;">' +
+        '  <div style="display: flex; justify-content: space-between; align-items: start; flex-wrap: wrap; gap: 8px;">' +
+        '    <div>' +
+        '      <span class="badge" style="background: var(--terracotta-50); color: var(--color-primary); margin-bottom: 8px;">' + esc(ord.activityTitle || ord.activityId) + '</span>' +
+        '      <h4 style="margin: 4px 0 8px 0; font-size: 1.05rem; color: var(--terracotta-900);">' + esc(ord.customerName) + '</h4>' +
+        '      <p style="margin: 2px 0; font-size: 0.85rem; color: var(--color-text-muted);">📞 ' + esc(ord.phone) + '</p>' +
+        '      ' + (ord.district ? '<p style="margin: 2px 0; font-size: 0.85rem; color: var(--color-text-muted);">📍 الحي: ' + esc(ord.district) + '</p>' : '') +
+        '      ' + (ord.locationAddress ? '<p style="margin: 2px 0; font-size: 0.85rem; color: var(--color-text-muted);">🏠 العنوان: ' + esc(ord.locationAddress) + '</p>' : '') +
+        '      ' + (ord.notes ? '<p style="margin: 6px 0; font-size: 0.85rem; padding: 6px; background: #fdf6f0; border-radius: 4px; color: #8a6d3b;">📝 ملاحظات: ' + esc(ord.notes) + '</p>' : '') +
+        '      <div style="margin-top: 10px;">' +
+        '        <strong style="font-size: 0.88rem; display: block; margin-bottom: 4px; color: var(--terracotta-800);">المنتجات المطلوبة:</strong>' +
+        '        <ul style="padding-right: 16px; margin: 0; font-size: 0.88rem; line-height: 1.5;">' + itemsHtml + '</ul>' +
+        '      </div>' +
+        '    </div>' +
+        '    <div style="text-align: left; display: flex; flex-direction: column; gap: 8px; align-items: flex-end;">' +
+        '      <span style="font-size: 0.75rem; color: var(--color-text-muted);">' + formatDate(ord.createdAt) + '</span>' +
+        '      <div style="display: flex; gap: 6px; margin-top: 4px;">' +
+        '        <span class="badge" style="background: ' + statusColor + '20; color: ' + statusColor + '; font-weight: bold;">الحالة: ' + statusText + '</span>' +
+        '        <span class="badge" style="background: ' + payColor + '20; color: ' + payColor + '; font-weight: bold;">الدفع: ' + payText + '</span>' +
+        '      </div>' +
+        '      ' + (ord.paymentId ? '<span style="font-size: 0.75rem; color: var(--color-text-muted); display:block;">رقم العملية: ' + esc(ord.paymentId) + ' (' + esc(ord.paymentMethod) + ')</span>' : '') +
+        '      ' + (ord.paymentAmount ? '<span style="font-size: 0.82rem; font-weight: bold; color: var(--color-primary);">المبلغ: ' + ord.paymentAmount + ' ريال</span>' : '') +
         '      <div style="display: flex; gap: 6px; margin-top: 10px; flex-wrap: wrap;">' +
-        '        <select class="admin-input btn--sm" data-action="status" style="width: auto; padding: 4px 8px;" title="تعديل الحالة">' +
-        '          <option value="pending"' + (ord.status === 'pending' ? ' selected' : '') + '>قيد الانتظار</option>' +
-        '          <option value="confirmed"' + (ord.status === 'confirmed' ? ' selected' : '') + '>تأكيد الطلب</option>' +
-        '          <option value="cancelled"' + (ord.status === 'cancelled' ? ' selected' : '') + '>إلغاء الطلب</option>' +
-        '        </select>' +
+        '        ' + statusSelectHtml +
         '        <select class="admin-input btn--sm" data-action="payment" style="width: auto; padding: 4px 8px;" title="حالة الدفع">' +
         '          <option value="unpaid"' + (ord.paymentStatus === 'unpaid' ? ' selected' : '') + '>غير مدفوع</option>' +
         '          <option value="paid"' + (ord.paymentStatus === 'paid' ? ' selected' : '') + '>مدفوع</option>' +
@@ -190,17 +238,139 @@
     });
   }
 
+  function deductTailoringInventory(order) {
+    var tenantSlug = store.getCurrentTenantSlug() || 'default';
+    
+    // 1. Calculate fabric consumed
+    var fabricItem = (order.items || []).find(function (item) {
+      return item.serviceId.indexOf('fabric-') === 0;
+    });
+    if (!fabricItem) return;
+
+    var metersUsed = 3.5;
+    if (order.tailoringDetails && order.tailoringDetails.measurements && order.tailoringDetails.measurements.height) {
+      var h = order.tailoringDetails.measurements.height;
+      metersUsed = parseFloat(((h * 2.3) / 100 + 0.2).toFixed(1));
+      if (isNaN(metersUsed) || metersUsed < 1) metersUsed = 3.5;
+    }
+
+    var deductions = [
+      { id: fabricItem.serviceId, qty: metersUsed, notes: 'قص قماش للثوب' }
+    ];
+
+    var design = order.tailoringDetails || {};
+    var placket = design.placket || '';
+
+    deductions.push({ name: 'أزرار ثياب بيضاء', searchKeyword: 'زرار', qty: 5, notes: 'أزرار للثوب' });
+    deductions.push({ name: 'حشوة ياقة لاصقة', searchKeyword: 'حشوة', qty: 0.5, notes: 'حشوة ياقة وجبزور' });
+    deductions.push({ name: 'كرتون تغليف فاخر', searchKeyword: 'كرتون', qty: 1, notes: 'صندوق التغليف' });
+
+    if (placket === 'hidden_buttons') {
+      deductions.push({ name: 'سحاب مخفي ثياب', searchKeyword: 'سحاب', qty: 1, notes: 'سحاب مخفي للصدر' });
+    }
+
+    if (window.MkenSupabaseDb && window.MkenSupabaseDb.isConfigured()) {
+      var client = window.MkenSupabaseDb.getClient();
+      window.MkenSupabaseDb.fetchInventoryItems(tenantSlug).then(function (dbItems) {
+        deductions.forEach(function (d) {
+          var targetItem = null;
+          if (d.id) {
+            targetItem = dbItems.find(function (x) { return x.id === d.id; });
+          } else {
+            targetItem = dbItems.find(function (x) {
+              return x.name.indexOf(d.searchKeyword) !== -1;
+            });
+          }
+
+          if (targetItem) {
+            client.rpc('deduct_inventory_stock', {
+              p_tenant: tenantSlug,
+              p_item_id: targetItem.id,
+              p_quantity: d.qty,
+              p_reference_id: order.id
+            }).then(function () {
+              client.from('mken_inventory_transactions').insert({
+                tenant_slug: tenantSlug,
+                item_id: targetItem.id,
+                type: 'stock-out',
+                quantity: d.qty,
+                reference_id: order.id,
+                notes: 'استهلاك تلقائي: ' + d.notes + ' لطلب تفصيل رقم ' + order.id
+              });
+            });
+          }
+        });
+      });
+    } else {
+      // Local fallback
+      var localItems = [];
+      try {
+        localItems = JSON.parse(localStorage.getItem('mken_inventory_items') || '[]');
+      } catch (e) {}
+
+      deductions.forEach(function (d) {
+        var targetItem = null;
+        if (d.id) {
+          targetItem = localItems.find(function (x) { return x.id === d.id; });
+        } else {
+          targetItem = localItems.find(function (x) {
+            return x.name.indexOf(d.searchKeyword) !== -1;
+          });
+        }
+
+        if (targetItem) {
+          targetItem.quantity = parseFloat((targetItem.quantity - d.qty).toFixed(2));
+          if (targetItem.quantity < 0) targetItem.quantity = 0;
+          
+          var localTx = [];
+          try {
+            localTx = JSON.parse(localStorage.getItem('mken_inventory_transactions') || '[]');
+          } catch (e) {}
+          localTx.push({
+            itemId: targetItem.id,
+            type: 'stock-out',
+            quantity: d.qty,
+            referenceId: order.id,
+            notes: 'استهلاك تلقائي: ' + d.notes + ' لطلب تفصيل رقم ' + order.id,
+            createdAt: new Date().toISOString()
+          });
+          localStorage.setItem('mken_inventory_transactions', JSON.stringify(localTx));
+        }
+      });
+      localStorage.setItem('mken_inventory_items', JSON.stringify(localItems));
+    }
+  }
+
   function updateOrderStatus(id, status) {
     var updated = orderStore.updateOrder(id, { status: status });
     if (updated) {
       toast('تم تحديث حالة الطلب بنجاح');
-      if (status === 'confirmed' && window.MkenWhatsappAutomation) {
-        var config = window.MkenServicesStore ? window.MkenServicesStore.loadConfig() : {};
-        window.MkenWhatsappAutomation.sendOrderConfirmation(updated, config)
-          .catch(function (err) {
-            console.error('Failed to send order confirmation:', err);
-          });
+      var config = window.MkenServicesStore ? window.MkenServicesStore.loadConfig() : {};
+      
+      // WhatsApp notifications
+      if (window.MkenWhatsappAutomation) {
+        if (status === 'confirmed') {
+          window.MkenWhatsappAutomation.sendOrderConfirmation(updated, config)
+            .catch(function (err) {
+              console.error('Failed to send order confirmation:', err);
+            });
+        } else {
+          window.MkenWhatsappAutomation.sendOrderStatusUpdate(updated, status, config)
+            .catch(function (err) {
+              console.error('Failed to send status update notification:', err);
+            });
+        }
       }
+
+      // Auto inventory deduction when status becomes "cutting"
+      if (status === 'cutting' && updated.activityId === 'tailoring') {
+        deductTailoringInventory(updated);
+        // Refresh inventory if active in admin dashboard
+        if (window.MkenAdminInventory) {
+          setTimeout(function() { window.MkenAdminInventory.refresh(); }, 500);
+        }
+      }
+      
       loadOrders();
     } else {
       toast('فشل تحديث حالة الطلب', 'error');

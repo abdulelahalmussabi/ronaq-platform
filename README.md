@@ -1,5 +1,7 @@
 # منصة مكِّن — Multi-Activity Platform
 
+**المستودع:** [github.com/abdulelahalmussabi/Mken](https://github.com/abdulelahalmussabi/Mken)
+
 مشروع منفصل عن `de7me` (الموقع الأصلي). يدعم **أنشطة رئيسية** متعددة مع **خدمات فرعية** وواجهات مختلفة لكل نشاط.
 
 ## الأنشطة الحالية

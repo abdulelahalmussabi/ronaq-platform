@@ -1925,6 +1925,14 @@ ALTER TABLE mken_saas_clients ADD COLUMN IF NOT EXISTS subscription_tier TEXT DE
               <label for="itemImageUrl">رابط الصورة</label>
               <input type="url" id="itemImageUrl" class="admin-input" placeholder="https://example.com/image.png">
             </div>
+            <div class="admin-field" style="display: flex; align-items: center; gap: 8px; margin-top: 10px; grid-column: span 2;">
+              <input type="checkbox" id="itemIsFabricRoll" style="width: auto; margin: 0;">
+              <label for="itemIsFabricRoll" style="margin: 0; font-weight: normal; cursor: pointer;">هذا الصنف عبارة عن "لفة قماش" تفصيل</label>
+            </div>
+            <div class="admin-field" id="fabricRollFields" style="margin-top: 10px;" hidden>
+              <label for="itemConsumptionRate">معدل استهلاك الثوب الواحد (بالمتر) *</label>
+              <input type="number" step="0.1" id="itemConsumptionRate" class="admin-input" value="3.5" min="0.1">
+            </div>
             <div class="admin-modal__actions" style="margin-top:20px;">
               <button type="button" class="btn btn--outline" id="inventoryModalCancel">إلغاء</button>
               <button type="submit" class="btn btn--primary">حفظ المنتج</button>
@@ -2283,6 +2291,7 @@ ALTER TABLE mken_saas_clients ADD COLUMN IF NOT EXISTS subscription_tier TEXT DE
   <script src="js/content-templates/events.js"></script>
   <script src="js/content-templates/commerce.js"></script>
   <script src="js/content-templates/hockey.js"></script>
+  <script src="js/content-templates/tailoring.js"></script>
   <script src="js/content-templates/bodybuilding.js"></script>
   <script src="js/content-templates/football.js"></script>
   <script src="js/ui-profiles/registry.js"></script>

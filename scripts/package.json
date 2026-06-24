@@ -1,6 +1,10 @@
 {
   "name": "mken-platform-push",
   "private": true,
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/abdulelahalmussabi/Mken.git"
+  },
   "type": "module",
   "dependencies": {
     "web-push": "^3.6.7",

@@ -67,7 +67,7 @@ ufw status
 ```bash
 mkdir -p /opt/mken-n8n
 cd /opt/mken-n8n
-git clone https://github.com/YOUR_ORG/mken.git repo
+git clone https://github.com/abdulelahalmussabi/Mken.git repo
 cp -r repo/examples/n8n/* .
 ```
 

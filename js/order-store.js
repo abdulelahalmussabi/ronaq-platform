@@ -164,26 +164,66 @@
 
   function buildCartWhatsAppMessage(brandName, payload) {
     var lines = [
-      'طلب شراء — ' + brandName,
+      'طلب تفصيل ثياب رجالية — ' + brandName,
       '━━━━━━━━━━━━━━',
     ];
-    if (payload.activityTitle) lines.push('المتجر: ' + payload.activityTitle);
-    lines.push('المنتجات:');
+    if (payload.activityTitle) lines.push('النشاط: ' + payload.activityTitle);
+    lines.push('المنتجات المختارة:');
     (payload.items || []).forEach(function (line, i) {
       var row = (i + 1) + '. ' + (line.icon || '') + ' ' + line.serviceTitle +
         ' × ' + line.quantity;
       if (line.priceLabel) row += ' (' + line.priceLabel + ')';
       lines.push(row);
     });
+    lines.push('━━━━━━━━━━━━━━');
+
+    // إضافة تفاصيل التفصيل والموديل
+    if (payload.tailoringDetails) {
+      var td = payload.tailoringDetails;
+      var collarMap = { round_hard: 'ياقة قلاب قاسي (سعودي)', round_soft: 'ياقة قلاب لين', plain_neck: 'سادة بدون ياقة (كويتي)' };
+      var cuffMap = { cuff_normal: 'سحاب/زرار عادي', cuff_french: 'أكمام كبك فرنسي', cuff_plain: 'أكمام مفتوحة سادة' };
+      var pocketMap = { hidden_side: 'جيب جانبي مخفي', visible_chest: 'جيب صدري', both: 'جيب صدري وجانبي' };
+      var placketMap = { hidden_buttons: 'أزرار مخفية', visible_buttons: 'أزرار ظاهرة كلاسيكية' };
+      var methodMap = { home_visit: 'زيارة خياط للمنزل 🏠', manual: 'إدخال يدوي 📏', saved_profile: 'المقاسات المحفوظة 📂' };
+      
+      lines.push('خيارات الموديل والتفصيل:');
+      lines.push('• الياقة: ' + (collarMap[td.collar] || td.collar));
+      lines.push('• الأكمام: ' + (cuffMap[td.cuff] || td.cuff));
+      lines.push('• الجيب: ' + (pocketMap[td.pocket] || td.pocket));
+      lines.push('• الأزرار: ' + (placketMap[td.placket] || td.placket));
+      lines.push('• طريقة أخذ القياس: ' + (methodMap[td.measurementMethod] || td.measurementMethod));
+      
+      if (td.measurements) {
+        lines.push('• المقاسات المدخلة:');
+        lines.push('  - الطول: ' + td.measurements.height + ' سم');
+        lines.push('  - الكتف: ' + td.measurements.shoulder + ' سم');
+        lines.push('  - الصدر: ' + td.measurements.chest + ' سم');
+        lines.push('  - الكم: ' + td.measurements.sleeve + ' سم');
+        lines.push('  - الرقبة: ' + td.measurements.neck + ' سم');
+      }
+      lines.push('━━━━━━━━━━━━━━');
+    }
+
     lines.push(
-      '━━━━━━━━━━━━━━',
       'الاسم: ' + payload.customerName,
       'الجوال: ' + payload.phone
     );
     if (payload.district) lines.push('الحي: ' + payload.district);
     if (payload.locationAddress) lines.push('العنوان: ' + payload.locationAddress);
     if (payload.notes) lines.push('ملاحظات: ' + payload.notes);
-    lines.push('━━━━━━━━━━━━━━', 'يُرجى تأكيد الطلب والسعر النهائي');
+    
+    // إضافة رابط التتبع الإلكتروني
+    if (payload.id) {
+      var origin = window.location.origin || 'https://mken.live';
+      var trackLink = origin + '/track.html?id=' + payload.id;
+      lines.push(
+        '━━━━━━━━━━━━━━',
+        '🔗 تتبع حالة ثوبك إلكترونياً:',
+        trackLink
+      );
+    }
+    
+    lines.push('━━━━━━━━━━━━━━', 'يُرجى تأكيد طلب التفصيل والسعر النهائي');
     return lines.join('\n');
   }
 

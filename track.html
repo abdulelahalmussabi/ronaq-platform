@@ -1,0 +1,479 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <script src="js/theme-early.js"></script>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>تتبع حالة ثوبك | مكن</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/themes.css">
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="css/platform.css">
+  <link rel="icon" type="image/png" href="assets/mken-logo.png">
+  <style>
+    .track-container {
+      max-width: 700px;
+      margin: 40px auto;
+      padding: 20px;
+    }
+    .track-card {
+      background: var(--color-background-card, #fff);
+      border: 1px solid var(--color-border);
+      border-radius: var(--radius);
+      padding: 30px;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.05);
+    }
+    .track-header {
+      border-bottom: 2px dashed var(--color-border);
+      padding-bottom: 20px;
+      margin-bottom: 30px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 15px;
+    }
+    .track-header h1 {
+      margin: 0;
+      font-size: 1.4rem;
+      color: var(--color-primary);
+    }
+    .order-meta-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      margin-bottom: 25px;
+      font-size: 0.9rem;
+      background: #f8f9fa;
+      padding: 15px;
+      border-radius: var(--radius);
+    }
+    .meta-item strong {
+      color: var(--color-text-muted);
+      display: block;
+      font-size: 0.8rem;
+    }
+    .meta-item span {
+      font-weight: 500;
+      color: var(--color-text);
+    }
+
+    /* timeline */
+    .timeline {
+      position: relative;
+      margin: 30px 0;
+      padding-right: 30px;
+    }
+    .timeline::before {
+      content: '';
+      position: absolute;
+      right: 11px;
+      top: 10px;
+      bottom: 10px;
+      width: 3px;
+      background: #e0e0e0;
+      z-index: 1;
+    }
+    .timeline-item {
+      position: relative;
+      margin-bottom: 30px;
+      z-index: 2;
+    }
+    .timeline-item:last-child {
+      margin-bottom: 0;
+    }
+    .timeline-icon {
+      position: absolute;
+      right: -30px;
+      top: 0;
+      width: 25px;
+      height: 25px;
+      border-radius: 50%;
+      background: #e0e0e0;
+      border: 4px solid #fff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.3s ease;
+      box-shadow: 0 0 0 2px #e0e0e0;
+    }
+    .timeline-content {
+      padding-right: 15px;
+    }
+    .timeline-title {
+      font-weight: 600;
+      margin: 0 0 4px 0;
+      font-size: 1.05rem;
+      color: var(--color-text-muted);
+    }
+    .timeline-desc {
+      margin: 0;
+      font-size: 0.88rem;
+      color: var(--color-text-muted);
+    }
+    .timeline-time {
+      font-size: 0.75rem;
+      color: var(--color-text-muted);
+      margin-top: 4px;
+      display: block;
+    }
+
+    /* Active state */
+    .timeline-item.active .timeline-icon {
+      background: var(--color-primary);
+      box-shadow: 0 0 0 2px var(--color-primary);
+      transform: scale(1.15);
+      animation: pulse 2s infinite;
+    }
+    .timeline-item.active .timeline-title {
+      color: var(--color-primary);
+      font-size: 1.1rem;
+    }
+    .timeline-item.active .timeline-desc {
+      color: var(--color-text);
+    }
+
+    /* Completed state */
+    .timeline-item.done .timeline-icon {
+      background: #2e7d32;
+      box-shadow: 0 0 0 2px #2e7d32;
+    }
+    .timeline-item.done .timeline-title {
+      color: #2e7d32;
+    }
+    .timeline-item.done .timeline-desc {
+      color: var(--color-text-muted);
+    }
+    .timeline-item.done::after {
+      content: '';
+      position: absolute;
+      right: -21px;
+      top: 15px;
+      height: 100%;
+      width: 3px;
+      background: #2e7d32;
+      z-index: -1;
+    }
+
+    /* Custom Design Details */
+    .thobe-specs {
+      background: #fdfaf7;
+      border: 1px solid #f6ecdf;
+      padding: 20px;
+      border-radius: var(--radius);
+      margin-top: 30px;
+    }
+    .thobe-specs h3 {
+      margin-top: 0;
+      margin-bottom: 12px;
+      font-size: 1rem;
+      color: var(--color-primary);
+    }
+    .specs-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px 20px;
+      font-size: 0.85rem;
+    }
+    .spec-line {
+      display: flex;
+      justify-content: space-between;
+      border-bottom: 1px dashed #e8dfd3;
+      padding-bottom: 4px;
+    }
+    .spec-line span:first-child {
+      color: var(--color-text-muted);
+    }
+    .spec-line span:last-child {
+      font-weight: 600;
+      color: var(--color-text);
+    }
+
+    @keyframes pulse {
+      0% { box-shadow: 0 0 0 0 rgba(26, 26, 46, 0.4); }
+      70% { box-shadow: 0 0 0 8px rgba(26, 26, 46, 0); }
+      100% { box-shadow: 0 0 0 0 rgba(26, 26, 46, 0); }
+    }
+  </style>
+</head>
+<body>
+  <header class="header" id="header">
+    <div class="container header__inner">
+      <a href="index.html" class="logo" aria-label="الرئيسية">
+        <span data-brand-logo data-size="48"></span>
+        <div class="logo__text">
+          <span class="logo__name" data-brand="name">مكن</span>
+          <span class="logo__tagline" data-brand="tagline">تفصيل ثياب رجالية</span>
+        </div>
+      </a>
+      <a href="index.html" class="btn btn--outline">العودة للرئيسية</a>
+    </div>
+  </header>
+
+  <main class="track-container">
+    <div id="loading" class="track-card" style="text-align: center; padding: 50px;">
+      <h2>جاري جلب تفاصيل طلبك...</h2>
+      <p class="admin-hint">يرجى الانتظار لحظات</p>
+    </div>
+
+    <div id="errorCard" class="track-card" style="text-align: center;" hidden>
+      <div style="font-size: 3rem; color: #c0392b; margin-bottom: 15px;">⚠️</div>
+      <h2>لم نتمكن من العثور على الطلب</h2>
+      <p>تأكد من صحة رقم الطلب في الرابط، أو تواصل معنا عبر واتساب لمساعدتك.</p>
+      <a href="https://wa.me/966543530333" class="btn btn--primary" style="margin-top: 15px;">تواصل معنا عبر واتساب</a>
+    </div>
+
+    <div id="trackApp" class="track-card" hidden>
+      <div class="track-header">
+        <div>
+          <h1>تتبع حالة ثوبك 🪡</h1>
+          <span id="brandLabel" class="badge" style="background: var(--color-primary-light); color: var(--color-primary); margin-top: 6px; display: inline-block;">رونق التفصيل</span>
+        </div>
+        <div style="text-align: left;">
+          <span id="orderStatusBadge" class="badge" style="background: #e6f4ea; color: #137333; font-weight: bold; font-size: 0.95rem; padding: 6px 12px;">قيد القص</span>
+        </div>
+      </div>
+
+      <div class="order-meta-grid">
+        <div class="meta-item">
+          <strong>رقم الطلب</strong>
+          <span id="orderIdLabel" style="font-family: monospace;">ord_123</span>
+        </div>
+        <div class="meta-item">
+          <strong>العميل</strong>
+          <span id="customerNameLabel">أحمد الغامدي</span>
+        </div>
+        <div class="meta-item">
+          <strong>تاريخ الطلب</strong>
+          <span id="orderDateLabel">1447/12/12 هـ</span>
+        </div>
+        <div class="meta-item">
+          <strong>نوع التفصيل</strong>
+          <span id="fabricLabel">قطن ياباني فاخر</span>
+        </div>
+      </div>
+
+      <!-- timeline -->
+      <div class="timeline" id="trackingTimeline">
+        <!-- Will be filled dynamically -->
+      </div>
+
+      <!-- Specs Card -->
+      <div class="thobe-specs" id="thobeSpecsCard" hidden>
+        <h3>تفاصيل التصميم والموديل المختارة</h3>
+        <div class="specs-grid" id="specsGrid">
+          <!-- Will be filled dynamically -->
+        </div>
+      </div>
+
+      <div style="margin-top: 30px; text-align: center;">
+        <p style="font-size: 0.88rem; color: var(--color-text-muted); margin-bottom: 12px;">لديك استفسار حول الطلب؟ تواصل معنا مباشرة:</p>
+        <a href="#" id="waInquiryBtn" class="btn btn--outline" target="_blank" rel="noopener" style="display: inline-flex; align-items: center; gap: 8px;">
+          💬 استفسر عبر واتساب
+        </a>
+      </div>
+    </div>
+  </main>
+
+  <script src="js/activities-catalog.js"></script>
+  <script src="js/services-catalog.js"></script>
+  <script src="js/ui-profiles/registry.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="js/supabase-db.js"></script>
+  <script src="js/services-store.js"></script>
+  <script src="js/order-store.js"></script>
+  <script src="js/brand-logo.js"></script>
+
+  <script>
+    (function () {
+      'use strict';
+      
+      var store = window.MkenServicesStore;
+      var db = window.MkenSupabaseDb;
+      
+      var loading = document.getElementById('loading');
+      var errorCard = document.getElementById('errorCard');
+      var trackApp = document.getElementById('trackApp');
+      
+      var orderId = new URLSearchParams(window.location.search).get('id') || '';
+      
+      var STAGES = [
+        { id: 'pending', title: 'طلب جديد', desc: 'تم استلام الطلب وبانتظار المراجعة والاعتماد' },
+        { id: 'measurements_pending', title: 'تأكيد المقاسات', desc: 'أخذ مقاسات الثوب (إدخال يدوي أو موعد الخياط المنزلي)' },
+        { id: 'cutting', title: 'قص القماش', desc: 'تم اعتماد المقاسات وبدء قص رول القماش المختار ✂️' },
+        { id: 'stitching', title: 'الخياطة والتفصيل', desc: 'ثوبك الآن تحت أيدي خياطينا لتجميعه وتفصيله 🪡' },
+        { id: 'ironing_packaging', title: 'الكي والتجهيز', desc: 'اللمسات النهائية ومراقبة الجودة والكي وتعبئة العلبة 🌟' },
+        { id: 'ready', title: 'جاهز للتسليم', desc: 'ثوبك جاهز بالكامل وبانتظار الاستلام أو تم شحنه 📦' },
+        { id: 'completed', title: 'تم التسليم', desc: 'ملبوس العافية! تم استلام الثوب وإغلاق الطلب بنجاح' }
+      ];
+
+      function esc(str) {
+        return String(str || '').replace(/&/g, '&amp;').replace(/</g, '&lt;');
+      }
+
+      function init() {
+        if (!orderId) {
+          loading.hidden = true;
+          errorCard.hidden = false;
+          return;
+        }
+
+        store.init().then(function () {
+          var config = store.loadConfig();
+          if (config.theme) store.applyTheme(config.theme);
+          
+          // Apply brand
+          var brand = store.getBrand(config);
+          document.querySelectorAll('[data-brand="name"]').forEach(function (el) {
+            el.textContent = brand.name;
+          });
+          
+          var phone = config.phone || '966543530333';
+          var waBtn = document.getElementById('waInquiryBtn');
+          if (waBtn) {
+            waBtn.href = 'https://wa.me/' + phone + '?text=' + encodeURIComponent('مرحباً، أود الاستفسار عن تفاصيل طلبي تفصيل الثياب رقم: ' + orderId);
+          }
+
+          loadOrderDetails(config);
+        });
+      }
+
+      function loadOrderDetails(config) {
+        if (db && db.isConfigured()) {
+          var tenantSlug = store.getCurrentTenantSlug();
+          db.fetchOrders(tenantSlug)
+            .then(function (orders) {
+              var found = orders.find(function (o) { return o.id === orderId; });
+              if (found) {
+                renderOrder(found);
+              } else {
+                fallbackToLocal();
+              }
+            })
+            .catch(function () {
+              fallbackToLocal();
+            });
+        } else {
+          fallbackToLocal();
+        }
+      }
+
+      function fallbackToLocal() {
+        var localOrders = [];
+        try {
+          localOrders = JSON.parse(localStorage.getItem('mken_platform_orders') || '[]');
+        } catch (e) {}
+        
+        var found = localOrders.find(function (o) { return o.id === orderId; });
+        if (found) {
+          renderOrder(found);
+        } else {
+          loading.hidden = true;
+          errorCard.hidden = false;
+        }
+      }
+
+      function renderOrder(order) {
+        loading.hidden = true;
+        trackApp.hidden = false;
+
+        document.getElementById('orderIdLabel').textContent = order.id;
+        document.getElementById('customerNameLabel').textContent = order.customerName;
+        
+        var d = new Date(order.createdAt);
+        document.getElementById('orderDateLabel').textContent = isNaN(d.getTime()) ? order.createdAt : d.toLocaleDateString('ar-SA');
+        
+        var servicesText = (order.items || []).map(function (i) { return i.serviceTitle; }).join('، ');
+        document.getElementById('fabricLabel').textContent = servicesText || 'ثوب مخصص';
+
+        // Set status badge
+        var currentStatus = order.status || 'pending';
+        var activeIndex = STAGES.findIndex(function (s) { return s.id === currentStatus; });
+        if (activeIndex === -1) {
+          // If status is "confirmed", we treat it as ready, or cutting
+          if (currentStatus === 'confirmed') activeIndex = 2; // Cutting
+          else if (currentStatus === 'cancelled') activeIndex = -2; // Cancelled
+        }
+
+        var badgeEl = document.getElementById('orderStatusBadge');
+        if (activeIndex === -2) {
+          badgeEl.textContent = 'ملغي';
+          badgeEl.style.background = '#fce8e6';
+          badgeEl.style.color = '#c5221f';
+        } else {
+          var currentStageName = STAGES[activeIndex >= 0 ? activeIndex : 0].title;
+          badgeEl.textContent = currentStageName;
+        }
+
+        // Render Timeline
+        var timelineEl = document.getElementById('trackingTimeline');
+        timelineEl.innerHTML = STAGES.map(function (stage, idx) {
+          var cls = 'timeline-item';
+          var iconHtml = '○';
+          
+          if (activeIndex === -2) {
+            // Cancelled order style
+            cls += ' done';
+            iconHtml = '✕';
+          } else {
+            if (idx < activeIndex) {
+              cls += ' done';
+              iconHtml = '✓';
+            } else if (idx === activeIndex) {
+              cls += ' active';
+              iconHtml = '•';
+            }
+          }
+
+          return (
+            '<div class="' + cls + '">' +
+            '  <div class="timeline-icon">' + iconHtml + '</div>' +
+            '  <div class="timeline-content">' +
+            '    <h4 class="timeline-title">' + stage.title + '</h4>' +
+            '    <p class="timeline-desc">' + stage.desc + '</p>' +
+            '  </div>' +
+            '</div>'
+          );
+        }).join('');
+
+        // Render Specs
+        if (order.tailoringDetails) {
+          var td = order.tailoringDetails;
+          var specsCard = document.getElementById('thobeSpecsCard');
+          var specsGrid = document.getElementById('specsGrid');
+          specsCard.hidden = false;
+
+          var collarMap = { round_hard: 'ياقة قلاب قاسي (سعودي)', round_soft: 'ياقة قلاب لين', plain_neck: 'سادة بدون ياقة (كويتي)' };
+          var cuffMap = { cuff_normal: 'سحاب/زرار عادي', cuff_french: 'أكمام كبك فرنسي', cuff_plain: 'أكمام مفتوحة سادة' };
+          var pocketMap = { hidden_side: 'جيب جانبي مخفي', visible_chest: 'جيب صدري', both: 'جيب صدري وجانبي' };
+          var placketMap = { hidden_buttons: 'أزرار مخفية', visible_buttons: 'أزرار ظاهرة كلاسيكية' };
+          var methodMap = { home_visit: 'زيارة خياط للمنزل 🏠', manual: 'إدخال يدوي 📏', saved_profile: 'المقاسات المحفوظة 📂' };
+
+          var html = 
+            '<div class="spec-line"><span>الياقة:</span><span>' + esc(collarMap[td.collar] || td.collar) + '</span></div>' +
+            '<div class="spec-line"><span>الأكمام:</span><span>' + esc(cuffMap[td.cuff] || td.cuff) + '</span></div>' +
+            '<div class="spec-line"><span>الجيب:</span><span>' + esc(pocketMap[td.pocket] || td.pocket) + '</span></div>' +
+            '<div class="spec-line"><span>الأزرار:</span><span>' + esc(placketMap[td.placket] || td.placket) + '</span></div>' +
+            '<div class="spec-line" style="grid-column: span 2;"><span>طريقة أخذ القياسات:</span><span>' + esc(methodMap[td.measurementMethod] || td.measurementMethod) + '</span></div>';
+
+          if (td.measurements) {
+            html += 
+              '<div class="spec-line" style="grid-column: span 2; margin-top: 10px; border-bottom: 1px solid #e8dfd3; font-weight: bold; color: var(--color-primary);">القياسات المعتمدة (سم)</div>' +
+              '<div class="spec-line"><span>الطول:</span><span>' + td.measurements.height + ' سم</span></div>' +
+              '<div class="spec-line"><span>الكتف:</span><span>' + td.measurements.shoulder + ' سم</span></div>' +
+              '<div class="spec-line"><span>الصدر:</span><span>' + td.measurements.chest + ' سم</span></div>' +
+              '<div class="spec-line"><span>طول الكم:</span><span>' + td.measurements.sleeve + ' سم</span></div>' +
+              '<div class="spec-line"><span>دوران الرقبة:</span><span>' + td.measurements.neck + ' سم</span></div>';
+          }
+
+          specsGrid.innerHTML = html;
+        }
+      }
+
+      init();
+    })();
+  </script>
+</body>
+</html>
