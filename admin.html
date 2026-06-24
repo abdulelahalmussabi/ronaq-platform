@@ -65,43 +65,115 @@
     </div>
   </div>
 
-  <div id="adminView" class="admin-panel" hidden>
-    <header class="admin-header">
-      <div class="admin-header__brand"><strong>إدارة المنصة</strong></div>
-      <div class="admin-header__actions">
-        <div id="syncIndicator" style="display:none; align-items:center; gap:6px; background:#f2994a15; color:#f2994a; padding:6px 12px; border-radius:30px; font-size:0.85rem; font-weight:500; margin-left: 10px;">
-          <span>🔄 معلق للمزامنة: </span>
-          <strong id="syncPendingCount">0</strong>
-        </div>
-        <a href="index.html" class="btn btn--outline" target="_blank">معاينة</a>
-        <button type="button" id="exportBtn" class="btn btn--outline">تصدير config</button>
-        <button type="button" id="logoutBtn" class="btn btn--outline">خروج</button>
+  <div id="adminView" class="admin-layout" hidden>
+    <!-- Right Sidebar (RTL) -->
+    <aside class="admin-sidebar" id="adminSidebar">
+      <div class="admin-sidebar__brand">
+        <strong>منصة مَكِّن</strong>
+        <span>لوحة التحكم والإدارة</span>
       </div>
-    </header>
+      
+      <div class="admin-sidebar__groups">
+        <!-- المجموعات التشغيلية اليومية -->
+        <div class="admin-sidebar__group">
+          <div class="admin-sidebar__group-title">العمليات التشغيلية</div>
+          <div class="admin-sidebar__group-items">
+            <button type="button" class="admin-tab admin-tab--active" data-tab="reports">
+              <span class="admin-tab-icon">📊</span>التقارير والإحصائيات
+            </button>
+            <button type="button" class="admin-tab" data-tab="appointments">
+              <span class="admin-tab-icon">📅</span>المواعيد والتقويم
+            </button>
+            <button type="button" class="admin-tab" data-tab="orders">
+              <span class="admin-tab-icon">📥</span>الطلبات الواردة
+            </button>
+            <button type="button" class="admin-tab" data-tab="invoices">
+              <span class="admin-tab-icon">🧾</span>الفواتير والمبيعات
+            </button>
+            <button type="button" class="admin-tab" data-tab="inventory">
+              <span class="admin-tab-icon">📦</span>المستودع والمخازن
+            </button>
+            <button type="button" class="admin-tab" data-tab="customers">
+              <span class="admin-tab-icon">👥</span>إدارة العملاء
+            </button>
+          </div>
+        </div>
 
-    <nav class="admin-tabs container">
-      <button type="button" class="admin-tab admin-tab--active" data-tab="activities">الأنشطة والخدمات</button>
-      <button type="button" class="admin-tab" data-tab="content">محتوى الواجهة</button>
-      <button type="button" class="admin-tab" data-tab="brand">العلامة والتواصل</button>
-      <button type="button" class="admin-tab" data-tab="appointments">المواعيد</button>
-      <button type="button" class="admin-tab" data-tab="orders">الطلبات</button>
-      <button type="button" class="admin-tab" data-tab="inventory">المستودع والمخازن</button>
-      <button type="button" class="admin-tab" data-tab="invoices">الفواتير والمبيعات</button>
-      <button type="button" class="admin-tab" data-tab="customers">إدارة العملاء</button>
-      <button type="button" class="admin-tab" data-tab="purchases">الموردين والمشتريات</button>
-      <button type="button" class="admin-tab" data-tab="reports">التقارير والإحصائيات</button>
-      <button type="button" class="admin-tab" data-tab="staff">الموظفين</button>
-      <button type="button" class="admin-tab" data-tab="supabase">الربط والأتمتة</button>
-      <button type="button" class="admin-tab" data-tab="whatsapp-logs">سجل الرسائل</button>
-      <button type="button" class="admin-tab" data-tab="saas">الاشتراك والخرائط</button>
-      <button type="button" class="admin-tab" data-tab="developer">المطورين (API)</button>
-      <button type="button" class="admin-tab" data-tab="clients" id="tabClients" style="display: none;">العملاء والاشتراكات (SaaS)</button>
-    </nav>
+        <!-- العمليات الإدارية والمشتريات -->
+        <div class="admin-sidebar__group">
+          <div class="admin-sidebar__group-title">إدارة التشغيل</div>
+          <div class="admin-sidebar__group-items">
+            <button type="button" class="admin-tab" data-tab="purchases">
+              <span class="admin-tab-icon">🤝</span>الموردين والمشتريات
+            </button>
+            <button type="button" class="admin-tab" data-tab="staff">
+              <span class="admin-tab-icon">💼</span>الموظفين
+            </button>
+            <button type="button" class="admin-tab" data-tab="whatsapp-logs">
+              <span class="admin-tab-icon">💬</span>سجل الرسائل
+            </button>
+          </div>
+        </div>
 
-    <main class="admin-main container">
-      <p id="enabledCount" class="admin-count"></p>
+        <!-- إعدادات التهيئة والربط -->
+        <div class="admin-sidebar__group">
+          <div class="admin-sidebar__group-title">الإعدادات والتهيئة</div>
+          <div class="admin-sidebar__group-items">
+            <button type="button" class="admin-tab" data-tab="activities">
+              <span class="admin-tab-icon">🔧</span>الأنشطة والخدمات
+            </button>
+            <button type="button" class="admin-tab" data-tab="content">
+              <span class="admin-tab-icon">🎨</span>محتوى الواجهة
+            </button>
+            <button type="button" class="admin-tab" data-tab="brand">
+              <span class="admin-tab-icon">🏷️</span>العلامة والتواصل
+            </button>
+            <button type="button" class="admin-tab" data-tab="supabase">
+              <span class="admin-tab-icon">🔗</span>الربط والأتمتة
+            </button>
+            <button type="button" class="admin-tab" data-tab="saas">
+              <span class="admin-tab-icon">💳</span>الاشتراك والخرائط
+            </button>
+            <button type="button" class="admin-tab" data-tab="developer">
+              <span class="admin-tab-icon">🛠️</span>المطورين (API)
+            </button>
+            <button type="button" class="admin-tab" data-tab="clients" id="tabClients" style="display: none;">
+              <span class="admin-tab-icon">🌐</span>العملاء والاشتراكات (SaaS)
+            </button>
+          </div>
+        </div>
+      </div>
+    </aside>
 
-      <div class="admin-tab-panel" data-panel="activities">
+    <!-- Content Area Wrapper -->
+    <div class="admin-content-wrapper">
+      <header class="admin-header">
+        <div class="admin-header__left">
+          <!-- Hamburger toggle for mobile -->
+          <button type="button" class="admin-mobile-toggle" id="adminMobileToggle" aria-label="فتح القائمة">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <line x1="3" y1="12" x2="21" y2="12"></line>
+              <line x1="3" y1="6" x2="21" y2="6"></line>
+              <line x1="3" y1="18" x2="21" y2="18"></line>
+            </svg>
+          </button>
+          <div class="admin-header__brand"><strong>إدارة المنصة</strong></div>
+        </div>
+        <div class="admin-header__actions">
+          <div id="syncIndicator" style="display:none; align-items:center; gap:6px; background:#f2994a15; color:#f2994a; padding:6px 12px; border-radius:30px; font-size:0.85rem; font-weight:500; margin-left: 10px;">
+            <span>🔄 معلق للمزامنة: </span>
+            <strong id="syncPendingCount">0</strong>
+          </div>
+          <a href="index.html" class="btn btn--outline" target="_blank">معاينة</a>
+          <button type="button" id="exportBtn" class="btn btn--outline">تصدير config</button>
+          <button type="button" id="logoutBtn" class="btn btn--outline">خروج</button>
+        </div>
+      </header>
+
+      <main class="admin-main container">
+        <p id="enabledCount" class="admin-count"></p>
+
+        <div class="admin-tab-panel" data-panel="activities" hidden>
         <section class="admin-section">
           <h3>تفعيل الأنشطة وتعديل الخدمات</h3>
           <p class="admin-hint">فعّل نشاطاً ثم خدماته. افتح «تعديل المحتوى» لكل خدمة لتغيير الاسم والوصف.</p>
@@ -523,7 +595,7 @@
       </div>
 
       <!-- تبويب التقارير والإحصائيات -->
-      <div class="admin-tab-panel" data-panel="reports" hidden>
+      <div class="admin-tab-panel" data-panel="reports">
         <section class="admin-section">
           <div class="admin-booking-header" style="align-items: center;">
             <div>
@@ -2084,7 +2156,11 @@ ALTER TABLE mken_saas_clients ADD COLUMN IF NOT EXISTS subscription_tier TEXT DE
       <button type="button" id="saveBtn" class="btn btn--primary btn--lg admin-save-fab">حفظ جميع التغييرات</button>
     </main>
     <div id="toast" class="toast" hidden></div>
-  </div>
+    </div> <!-- admin-content-wrapper -->
+    
+    <!-- Sidebar mobile overlay -->
+    <div class="admin-sidebar-overlay" id="adminSidebarOverlay"></div>
+  </div> <!-- adminView -->
 
   <script src="js/activities-catalog.js"></script>
   <script src="js/services-catalog.js"></script>

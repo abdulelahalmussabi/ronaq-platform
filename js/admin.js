@@ -36,7 +36,7 @@
   var pendingBrandLogo = null;
   var pendingBrandLogoTouched = false;
   var selectedTheme = 'slate';
-  var activeTab = 'activities';
+  var activeTab = 'reports';
 
   // Payment settings elements
   var paymentEnabled = document.getElementById('paymentEnabled');
@@ -76,6 +76,7 @@
     }
 
     renderPanel();
+    switchTab(activeTab);
   }
 
   function showLogin() {
@@ -1027,6 +1028,31 @@
       switchTab(btn.getAttribute('data-tab'));
     });
   });
+
+  // Mobile Sidebar Toggle
+  var adminSidebar = document.getElementById('adminSidebar');
+  var adminSidebarOverlay = document.getElementById('adminSidebarOverlay');
+  var adminMobileToggle = document.getElementById('adminMobileToggle');
+
+  if (adminMobileToggle && adminSidebar && adminSidebarOverlay) {
+    adminMobileToggle.addEventListener('click', function () {
+      adminSidebar.classList.toggle('admin-sidebar--open');
+      adminSidebarOverlay.classList.toggle('admin-sidebar-overlay--visible');
+    });
+
+    adminSidebarOverlay.addEventListener('click', function () {
+      adminSidebar.classList.remove('admin-sidebar--open');
+      adminSidebarOverlay.classList.remove('admin-sidebar-overlay--visible');
+    });
+
+    // Close sidebar on mobile when a tab is clicked
+    document.querySelectorAll('.admin-sidebar .admin-tab').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        adminSidebar.classList.remove('admin-sidebar--open');
+        adminSidebarOverlay.classList.remove('admin-sidebar-overlay--visible');
+      });
+    });
+  }
 
   // Tab Navigation between Login & Register
   var tabToLogin = document.getElementById('tabToLogin');
