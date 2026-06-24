@@ -294,14 +294,14 @@ module.exports = async function handler(req, res) {
     return res.status(200).end();
   }
 
-  const pin = (req.body && req.body.pin) || req.query.pin || req.headers['x-admin-pin'];
+  const pin = (req.body && req.body.pin) || (req.query && req.query.pin) || req.headers['x-admin-pin'];
   const expectedPin = process.env.ADMIN_PIN || 'mken2026';
 
   if (!pin || (pin.trim() !== expectedPin && pin.trim() !== 'mken2026')) {
     return res.status(401).json({ success: false, error: 'رمز الدخول PIN غير صحيح أو غير متوفر لدخول إعدادات الزكاة' });
   }
 
-  const action = (req.body && req.body.action) || req.query.action;
+  const action = (req.body && req.body.action) || (req.query && req.query.action);
   if (!action) {
     return res.status(400).json({ success: false, error: 'Missing action parameter' });
   }
