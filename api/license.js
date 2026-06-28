@@ -252,6 +252,64 @@ async function doSetStatus(req, res, supabase, status, eventType) {
   return res.status(200).json({ success: true, license: data });
 }
 
+function publicPlans() {
+  return Object.keys(licenseIssue.PLANS).map(function (key) {
+    const p = licenseIssue.PLANS[key];
+    return {
+      key: key, label: p.label,
+      annual: p.annual, perpetual: p.perpetual,
+      maxDevices: p.maxDevices
+    };
+  });
+}
+
+async function doCheckoutConfig(req, res) {
+  return res.status(200).json({
+    publishableKey: process.env.MOYASAR_PUBLISHABLE_KEY || '',
+    currency: '﷼',
+    plans: publicPlans()
+  });
+}
+
+async function doCheckoutStatus(req, res, supabase) {
+  const paymentId = (req.query.paymentId || req.query.payment_id || '').trim();
+  if (!paymentId) return res.status(400).json({ error: 'paymentId مطلوب' });
+
+  const secret = process.env.MOYASAR_SECRET_KEY;
+  if (!secret) return res.status(500).json({ error: 'مفتاح Moyasar غير مهيّأ' });
+
+  let payment;
+  try {
+    const auth = Buffer.from(secret + ':').toString('base64');
+    const r = await fetch('https://api.moyasar.com/v1/payments/' + encodeURIComponent(paymentId), {
+      headers: { Authorization: 'Basic ' + auth }
+    });
+    if (!r.ok) throw new Error('HTTP ' + r.status);
+    payment = await r.json();
+  } catch (e) {
+    return res.status(400).json({ error: 'تعذّر التحقق من الدفعة: ' + e.message });
+  }
+
+  const paid = payment.status === 'paid' || payment.status === 'captured';
+  if (!paid) {
+    return res.status(200).json({ paid: false, status: payment.status || 'unknown' });
+  }
+
+  const { data: lic } = await supabase
+    .from('mken_licenses').select('license_key, plan, expires_at, max_devices')
+    .eq('payment_id', paymentId).maybeSingle();
+
+  if (!lic) {
+    return res.status(200).json({ paid: true, issued: false, message: 'تم الدفع — جارٍ إصدار الترخيص، حدّث بعد لحظات.' });
+  }
+
+  return res.status(200).json({
+    paid: true, issued: true,
+    licenseKey: lic.license_key, plan: lic.plan,
+    expiresAt: lic.expires_at, maxDevices: lic.max_devices
+  });
+}
+
 module.exports = async function handler(req, res) {
   if (handleCors(req, res, 'GET,POST,OPTIONS')) return;
 
@@ -268,15 +326,17 @@ module.exports = async function handler(req, res) {
 
     switch (action) {
       // عامة
-      case 'activate':   return await doActivate(req, res, supabase);
-      case 'verify':     return await doVerify(req, res, supabase);
-      case 'deactivate': return await doDeactivate(req, res, supabase);
+      case 'activate':        return await doActivate(req, res, supabase);
+      case 'verify':          return await doVerify(req, res, supabase);
+      case 'deactivate':      return await doDeactivate(req, res, supabase);
+      case 'checkout-config': return await doCheckoutConfig(req, res);
+      case 'checkout-status': return await doCheckoutStatus(req, res, supabase);
       // إدارية
-      case 'issue':      return await doIssue(req, res, supabase);
-      case 'list':       return await doList(req, res, supabase);
-      case 'revoke':     return await doSetStatus(req, res, supabase, 'revoked', 'revoked');
-      case 'suspend':    return await doSetStatus(req, res, supabase, 'suspended', 'suspended');
-      case 'resume':     return await doSetStatus(req, res, supabase, 'active', 'resumed');
+      case 'issue':           return await doIssue(req, res, supabase);
+      case 'list':            return await doList(req, res, supabase);
+      case 'revoke':          return await doSetStatus(req, res, supabase, 'revoked', 'revoked');
+      case 'suspend':         return await doSetStatus(req, res, supabase, 'suspended', 'suspended');
+      case 'resume':          return await doSetStatus(req, res, supabase, 'active', 'resumed');
       default:
         return res.status(400).json({ error: 'إجراء غير معروف. استخدم action=activate|verify|deactivate|issue|list|revoke|suspend|resume' });
     }
