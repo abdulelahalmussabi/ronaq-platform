@@ -1755,9 +1755,10 @@
   function checkRecoveryMode() {
     var hash = window.location.hash || '';
     var params = new URLSearchParams(window.location.search);
-    var isRecovery = hash.indexOf('type=recovery') !== -1 || params.get('mode') === 'reset-password';
+    var isRecovery = hash.indexOf('type=recovery') !== -1 || params.get('mode') === 'reset-password' || sessionStorage.getItem('mken_reset_password_mode') === '1';
     
     if (isRecovery) {
+      sessionStorage.removeItem('mken_reset_password_mode');
       if (loginForm) loginForm.hidden = true;
       var resetForm = document.getElementById('resetPasswordForm');
       if (resetForm) {
