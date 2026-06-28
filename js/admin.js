@@ -1752,10 +1752,205 @@
     }
   }
 
+  function checkRecoveryMode() {
+    var hash = window.location.hash || '';
+    var params = new URLSearchParams(window.location.search);
+    var isRecovery = hash.indexOf('type=recovery') !== -1 || params.get('mode') === 'reset-password';
+    
+    if (isRecovery) {
+      if (loginForm) loginForm.hidden = true;
+      var resetForm = document.getElementById('resetPasswordForm');
+      if (resetForm) {
+        resetForm.hidden = false;
+        resetForm.scrollIntoView({ behavior: 'smooth' });
+      }
+      var loginCardTitle = document.getElementById('loginCardTitle');
+      var loginCardDesc = document.getElementById('loginCardDesc');
+      if (loginCardTitle) loginCardTitle.textContent = 'تعيين كلمة المرور الجديدة';
+      if (loginCardDesc) loginCardDesc.textContent = 'أدخل كلمة مرور قوية لتأمين حسابك';
+      return true;
+    }
+    return false;
+  }
+
+  function initPasswordRecovery() {
+    var linkForgotPassword = document.getElementById('linkForgotPassword');
+    var linkBackToLogin = document.getElementById('linkBackToLogin');
+    var forgotForm = document.getElementById('forgotPasswordForm');
+    var resetForm = document.getElementById('resetPasswordForm');
+    
+    var loginCardTitle = document.getElementById('loginCardTitle');
+    var loginCardDesc = document.getElementById('loginCardDesc');
+    
+    if (linkForgotPassword) {
+      linkForgotPassword.addEventListener('click', function (e) {
+        e.preventDefault();
+        if (loginForm) loginForm.hidden = true;
+        if (forgotForm) forgotForm.hidden = false;
+        if (loginCardTitle) loginCardTitle.textContent = 'استعادة كلمة المرور';
+        if (loginCardDesc) loginCardDesc.textContent = 'أدخل بريدك الإلكتروني لإرسال رابط الاستعادة';
+      });
+    }
+    
+    if (linkBackToLogin) {
+      linkBackToLogin.addEventListener('click', function (e) {
+        e.preventDefault();
+        if (forgotForm) forgotForm.hidden = true;
+        if (loginForm) loginForm.hidden = false;
+        if (loginCardTitle) loginCardTitle.textContent = 'لوحة الإدارة';
+        if (loginCardDesc) loginCardDesc.textContent = 'تحكم كامل بكل محتوى الواجهة والخدمات';
+      });
+    }
+    
+    if (forgotForm) {
+      forgotForm.addEventListener('submit', function (e) {
+        e.preventDefault();
+        var email = document.getElementById('forgotEmailInput').value.trim();
+        var errorEl = document.getElementById('forgotError');
+        var successEl = document.getElementById('forgotSuccess');
+        var submitBtn = document.getElementById('forgotSubmitBtn');
+        
+        if (errorEl) errorEl.hidden = true;
+        if (successEl) successEl.hidden = true;
+        
+        var db = window.MkenSupabaseDb;
+        if (!db || !db.isConfigured()) {
+          if (errorEl) {
+            errorEl.textContent = 'يرجى تهيئة السحاب (Supabase) أولاً.';
+            errorEl.hidden = false;
+          }
+          return;
+        }
+        
+        var client = db.getClient();
+        if (!client) {
+          if (errorEl) {
+            errorEl.textContent = 'فشل الاتصال بقاعدة البيانات.';
+            errorEl.hidden = false;
+          }
+          return;
+        }
+        
+        if (submitBtn) {
+          submitBtn.disabled = true;
+          submitBtn.textContent = 'جاري الإرسال...';
+        }
+        
+        var redirectTo = window.location.origin + window.location.pathname + '?mode=reset-password';
+        var authProvider = client.auth.resetPasswordForEmail ? client.auth : (client.auth.api || client.auth);
+        
+        authProvider.resetPasswordForEmail(email, { redirectTo: redirectTo })
+          .then(function (res) {
+            if (submitBtn) {
+              submitBtn.disabled = false;
+              submitBtn.textContent = 'إرسال رابط الاستعادة';
+            }
+            if (res && res.error) throw res.error;
+            if (successEl) {
+              successEl.textContent = 'تم إرسال رابط استعادة كلمة المرور بنجاح إلى بريدك الإلكتروني.';
+              successEl.hidden = false;
+            }
+          })
+          .catch(function (err) {
+            if (submitBtn) {
+              submitBtn.disabled = false;
+              submitBtn.textContent = 'إرسال رابط الاستعادة';
+            }
+            if (errorEl) {
+              errorEl.textContent = err.message || 'فشل إرسال الرابط، يرجى المحاولة لاحقاً.';
+              errorEl.hidden = false;
+            }
+          });
+      });
+    }
+    
+    if (resetForm) {
+      resetForm.addEventListener('submit', function (e) {
+        e.preventDefault();
+        var password = document.getElementById('resetPasswordInput').value;
+        var confirmPassword = document.getElementById('resetConfirmPasswordInput').value;
+        var errorEl = document.getElementById('resetError');
+        var successEl = document.getElementById('resetSuccess');
+        var submitBtn = document.getElementById('resetSubmitBtn');
+        
+        if (errorEl) errorEl.hidden = true;
+        if (successEl) successEl.hidden = true;
+        
+        if (password !== confirmPassword) {
+          if (errorEl) {
+            errorEl.textContent = 'كلمات المرور غير متطابقة.';
+            errorEl.hidden = false;
+          }
+          return;
+        }
+        
+        var db = window.MkenSupabaseDb;
+        if (!db || !db.isConfigured()) {
+          if (errorEl) {
+            errorEl.textContent = 'يرجى تهيئة السحاب (Supabase) أولاً.';
+            errorEl.hidden = false;
+          }
+          return;
+        }
+        
+        var client = db.getClient();
+        if (!client) {
+          if (errorEl) {
+            errorEl.textContent = 'فشل الاتصال بقاعدة البيانات.';
+            errorEl.hidden = false;
+          }
+          return;
+        }
+        
+        if (submitBtn) {
+          submitBtn.disabled = true;
+          submitBtn.textContent = 'جاري التحديث...';
+        }
+        
+        var updateFn = client.auth.updateUser ? client.auth.updateUser.bind(client.auth) : (client.auth.update ? client.auth.update.bind(client.auth) : null);
+        if (!updateFn) {
+          if (errorEl) {
+            errorEl.textContent = 'ميزة التحديث غير متوفرة في إصدار مكتبة الدخول.';
+            errorEl.hidden = false;
+          }
+          return;
+        }
+        
+        updateFn({ password: password })
+          .then(function (res) {
+            if (submitBtn) {
+              submitBtn.disabled = false;
+              submitBtn.textContent = 'تعيين كلمة المرور الجديدة';
+            }
+            if (res && res.error) throw res.error;
+            if (successEl) {
+              successEl.textContent = 'تم تحديث كلمة المرور بنجاح! سيتم تحويلك لتسجيل الدخول.';
+              successEl.hidden = false;
+            }
+            setTimeout(function () {
+              window.location.href = window.location.origin + window.location.pathname;
+            }, 3000);
+          })
+          .catch(function (err) {
+            if (submitBtn) {
+              submitBtn.disabled = false;
+              submitBtn.textContent = 'تعيين كلمة المرور الجديدة';
+            }
+            if (errorEl) {
+              errorEl.textContent = err.message || 'فشل تحديث كلمة المرور.';
+              errorEl.hidden = false;
+            }
+          });
+      });
+    }
+  }
+
   window.addEventListener('mken_sync_queue_changed', updateSyncIndicator);
 
   store.init().then(function () {
     updateSyncIndicator();
+    initPasswordRecovery();
+    
     // Check if Supabase database is connected for SaaS features
     var db = window.MkenSupabaseDb;
     var regError = document.getElementById('registerError');
@@ -1771,7 +1966,9 @@
       if (regBtn) regBtn.disabled = true;
     }
 
-    if (store.isAdminLoggedIn()) {
+    if (checkRecoveryMode()) {
+      // Keep recovery visible
+    } else if (store.isAdminLoggedIn()) {
       showAdmin();
       startWhatsappAutomationPolling();
     } else {

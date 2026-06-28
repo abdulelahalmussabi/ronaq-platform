@@ -46,7 +46,10 @@
         </div>
 
         <div id="loginPasswordBlock" class="admin-field">
-          <label for="loginPasswordInput">كلمة المرور</label>
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px;">
+            <label for="loginPasswordInput" style="margin-bottom: 0;">كلمة المرور</label>
+            <a href="#" id="linkForgotPassword" style="font-size: 0.85rem; color: var(--color-primary); text-decoration: none;">نسيت كلمة المرور؟</a>
+          </div>
           <input type="password" id="loginPasswordInput" class="admin-input" placeholder="أدخل كلمة المرور" required>
         </div>
 
@@ -57,6 +60,33 @@
 
         <p id="loginError" class="admin-error" hidden>معلومات الدخول غير صحيحة</p>
         <button type="submit" id="loginSubmitBtn" class="btn btn--primary btn--lg" style="width:100%">دخول</button>
+      </form>
+
+      <!-- نموذج استعادة كلمة المرور -->
+      <form id="forgotPasswordForm" style="margin-top: 15px;" hidden>
+        <div class="admin-field">
+          <label for="forgotEmailInput">البريد الإلكتروني المسجل</label>
+          <input type="email" id="forgotEmailInput" class="admin-input" placeholder="example@mken.com" dir="ltr" required>
+        </div>
+        <p id="forgotError" class="admin-error" hidden></p>
+        <p id="forgotSuccess" style="color: #2e7d32; font-size: 0.9rem; margin-bottom: 15px; text-align: center; font-weight: 500;" hidden></p>
+        <button type="submit" id="forgotSubmitBtn" class="btn btn--primary btn--lg" style="width:100%">إرسال رابط الاستعادة</button>
+        <a href="#" id="linkBackToLogin" style="display: block; margin-top: 15px; text-align: center; font-size: 0.9rem; color: var(--color-text-secondary); text-decoration: none;">← العودة لتسجيل الدخول</a>
+      </form>
+
+      <!-- نموذج تعيين كلمة مرور جديدة -->
+      <form id="resetPasswordForm" style="margin-top: 15px;" hidden>
+        <div class="admin-field">
+          <label for="resetPasswordInput">كلمة المرور الجديدة</label>
+          <input type="password" id="resetPasswordInput" class="admin-input" placeholder="أدخل كلمة المرور الجديدة" required>
+        </div>
+        <div class="admin-field">
+          <label for="resetConfirmPasswordInput">تأكيد كلمة المرور الجديدة</label>
+          <input type="password" id="resetConfirmPasswordInput" class="admin-input" placeholder="أدخل تأكيد كلمة المرور" required>
+        </div>
+        <p id="resetError" class="admin-error" hidden></p>
+        <p id="resetSuccess" style="color: #2e7d32; font-size: 0.9rem; margin-bottom: 15px; text-align: center; font-weight: 500;" hidden></p>
+        <button type="submit" id="resetSubmitBtn" class="btn btn--primary btn--lg" style="width:100%">تعيين كلمة المرور الجديدة</button>
       </form>
 
 
